@@ -8,7 +8,7 @@ import config_parser
 import table_format
 
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'deployment'))
-from remote_executor import RemoteExecutor  # noqa: E402 pylint: disable=E0401
+from remote_executor import RemoteExecutor
 
 
 def cli_argument_parser():
