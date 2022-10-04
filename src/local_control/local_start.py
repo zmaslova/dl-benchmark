@@ -25,7 +25,7 @@ def cli_argument_parser():
 
     inference_args.add_argument('inference_args',
                                 nargs='+',
-                                help = 'All necessary arguments for selected inference mode')
+                                help='All necessary arguments for selected inference mode')
 
     args = parser.parse_args()
 
