@@ -1,6 +1,7 @@
 import abc
 import os
 import platform
+import re
 from abc import ABC
 
 
@@ -107,6 +108,8 @@ class OpenVINOProcess(ProcessHandler, ABC):
             return SyncOpenVINOProcess(test, executor, log)
         elif mode == 'async':
             return AsyncOpenVINOProcess(test, executor, log)
+        elif mode == 'benchmark':
+            return OpenVINOBenchmarkProcess(test, executor, log)
 
     def _fill_command_line(self):
         model_xml = self._my_test.model.model
@@ -128,6 +131,86 @@ class OpenVINOProcess(ProcessHandler, ABC):
         command_line = OpenVINOProcess.__add_raw_output_time_for_cmd_line(command_line, '--raw_output true')
 
         return command_line
+
+
+class OpenVINOBenchmarkProcess(OpenVINOProcess):
+    def __init__(self, test, executor, log):
+        super().__init__(test, executor, log)
+
+    @staticmethod
+    def __add_perf_hint_for_cmd_line(command_line, perf_hint):
+        hint = perf_hint.lower()
+        if hint in ('latency', 'throughput'):
+            return f'{command_line} -hint {hint}'
+        return command_line
+
+    @staticmethod
+    def __add_extension_for_cmd_line(command_line, extension, device):
+        if 'GPU' in device:
+            return '{0} -c {1}'.format(command_line, extension)
+        elif 'CPU' in device or 'MYRIAD' in device:
+            return '{0} -l {1}'.format(command_line, extension)
+        return command_line
+
+    @staticmethod
+    def __add_nthreads_for_cmd_line(command_line, nthreads):
+        return '{0} -nthreads {1}'.format(command_line, nthreads)
+
+    @staticmethod
+    def create_process(test, executor, log):
+        return OpenVINOBenchmarkProcess(test, executor, log)
+
+    def get_performance_metrics(self):
+        if self._my_row_output[0] != 0 or len(self._my_output) == 0:
+            return None, None, None
+
+        duration = self._get_benchmark_app_metric('Duration')
+        iter_count = self._get_benchmark_app_metric('Count')
+        average_time = round(duration / iter_count, 2) if None not in (duration, iter_count) else None
+
+        fps = self._get_benchmark_app_metric('Throughput')
+        latency = self._get_benchmark_app_metric('Median')
+
+        return average_time, fps, latency
+
+    def _fill_command_line(self):
+        model_xml = self._my_test.model.model
+        dataset = self._my_test.dataset.path
+        batch = self._my_test.indep_parameters.batch_size
+        device = self._my_test.indep_parameters.device
+        iteration = self._my_test.indep_parameters.iteration
+
+        arguments = f'-m {model_xml} -i {dataset} -b {batch} -d {device} -niter {iteration}'
+
+        extension = self._my_test.dep_parameters.extension
+        if extension:
+            arguments = OpenVINOBenchmarkProcess.__add_extension_for_cmd_line(arguments, extension, device)
+
+        nthreads = self._my_test.dep_parameters.nthreads
+        if nthreads:
+            arguments = OpenVINOBenchmarkProcess.__add_nthreads_for_cmd_line(arguments, nthreads)
+
+        perf_hint = self._my_test.dep_parameters.perf_hint
+        if perf_hint:
+            arguments = OpenVINOBenchmarkProcess.__add_perf_hint_for_cmd_line(arguments, perf_hint)
+
+        command_line = f'benchmark_app {arguments}'
+        return command_line
+
+    def _get_benchmark_app_metric(self, metric_name):
+        """
+        gets metric value from benchmark app full output
+        :param metric_name: metric name, ex 'Throughput'
+        :return: float value or None if pattern not found
+        """
+        for line in self._my_output:
+            regex = re.compile(f'.*{metric_name}:\\s+(?P<metric>\\d*\\.\\d+|\\d+).*')
+            res = regex.match(line)
+            if res:
+                try:
+                    return float(res.group('metric'))
+                except ValueError:
+                    return None
 
 
 class SyncOpenVINOProcess(OpenVINOProcess):

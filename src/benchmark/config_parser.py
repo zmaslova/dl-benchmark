@@ -90,6 +90,7 @@ class OpenVINOParametersParser(DependentParametersParser):
     def parse_parameters(self, curr_test):
         CONFIG_FRAMEWORK_DEPENDENT_TAG = 'FrameworkDependent'
         CONFIG_FRAMEWORK_DEPENDENT_MODE_TAG = 'Mode'
+        CONFIG_FRAMEWORK_DEPENDENT_PERF_HINT_TAG = 'PerfHint'
         CONFIG_FRAMEWORK_DEPENDENT_EXTENSION_TAG = 'Extension'
         CONFIG_FRAMEWORK_DEPENDENT_ASYNC_REQUEST_COUNT_TAG = 'AsyncRequestCount'
         CONFIG_FRAMEWORK_DEPENDENT_THREAD_COUNT_TAG = 'ThreadCount'
@@ -99,6 +100,8 @@ class OpenVINOParametersParser(DependentParametersParser):
 
         _mode = dep_parameters_tag.getElementsByTagName(
             CONFIG_FRAMEWORK_DEPENDENT_MODE_TAG)[0].firstChild
+        _perf_hint = dep_parameters_tag.getElementsByTagName(
+            CONFIG_FRAMEWORK_DEPENDENT_PERF_HINT_TAG)[0].firstChild
         _extension = dep_parameters_tag.getElementsByTagName(
             CONFIG_FRAMEWORK_DEPENDENT_EXTENSION_TAG)[0].firstChild
         _async_request_count = dep_parameters_tag.getElementsByTagName(
@@ -110,6 +113,7 @@ class OpenVINOParametersParser(DependentParametersParser):
 
         return OpenVINOParameters(
             mode=_mode.data if _mode else None,
+            perf_hint=_perf_hint.data if _perf_hint else None,
             extension=_extension.data if _extension else None,
             async_request_count=_async_request_count.data if _async_request_count else None,
             thread_count=_thread_count.data if _thread_count else None,
@@ -325,8 +329,9 @@ class FrameworkIndependentParameters(ParametersMethods):
 
 
 class OpenVINOParameters(ParametersMethods):
-    def __init__(self, mode, extension, async_request_count, thread_count, stream_count):
+    def __init__(self, mode, perf_hint, extension, async_request_count, thread_count, stream_count):
         self.mode = None
+        self.perf_hint = None
         self.extension = None
         self.async_request = None
         self.nthreads = None
@@ -357,10 +362,12 @@ class OpenVINOParameters(ParametersMethods):
                     self.nstreams = stream_count
                 else:
                     raise ValueError('Stream count can only take values: integer greater than zero.')
+        if self.mode == 'Benchmark':
+            self.perf_hint = perf_hint
 
     @staticmethod
     def _mode_is_correct(mode):
-        const_correct_mode = ['sync', 'async']
+        const_correct_mode = ['sync', 'async', 'benchmark']
         if mode.lower() in const_correct_mode:
             return True
         return False
