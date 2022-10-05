@@ -2,7 +2,6 @@ import abc
 import os
 import platform
 from abc import ABC
-from pathlib import Path
 
 
 class ProcessHandler(metaclass=abc.ABCMeta):
@@ -147,7 +146,8 @@ class SyncOpenVINOProcess(OpenVINOProcess):
         return average_time, fps, latency
 
     def _fill_command_line(self):
-        path_to_sync_scrypt = os.path.join(Path(__file__).parent.parent, 'inference', 'inference_sync_mode.py')
+        path_to_sync_scrypt = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'inference',
+                                           'inference_sync_mode.py')
         python = ProcessHandler._get_cmd_python_version()
 
         common_params = super()._fill_command_line()
@@ -179,7 +179,8 @@ class AsyncOpenVINOProcess(OpenVINOProcess):
         return average_time, fps, 0
 
     def _fill_command_line(self):
-        path_to_async_scrypt = os.path.join(Path(__file__).parent.parent, 'inference', 'inference_async_mode.py')
+        path_to_async_scrypt = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'inference',
+                                            'inference_async_mode.py')
         python = ProcessHandler._get_cmd_python_version()
 
         common_params = super()._fill_command_line()
@@ -238,7 +239,8 @@ class IntelCaffeProcess(ProcessHandler):
         return average_time, fps, latency
 
     def _fill_command_line(self):
-        path_to_intelcaffe_scrypt = os.path.join(Path(__file__).parent.parent, 'inference', 'inference_caffe.py')
+        path_to_intelcaffe_scrypt = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'inference',
+                                                 'inference_caffe.py')
         python = ProcessHandler._get_cmd_python_version()
 
         model_prototxt = self._my_test.model.model
@@ -337,7 +339,8 @@ class TensorFlowProcess(ProcessHandler):
         return average_time, fps, latency
 
     def _fill_command_line(self):
-        path_to_tensorflow_scrypt = os.path.join(Path(__file__).parent.parent, 'inference', 'inference_tensorflow.py')
+        path_to_tensorflow_scrypt = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'inference',
+                                                 'inference_tensorflow.py')
         python = ProcessHandler._get_cmd_python_version()
 
         model = self._my_test.model.model
