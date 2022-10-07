@@ -11,13 +11,19 @@
 
 class ONNXModel {
  private:
-    std::vector<char*> input_names;
-    std::vector<char*> output_names;
+    std::vector<Ort::AllocatedStringPtr> input_names_ptr;
+    std::vector<const char*> input_names;
+    std::vector<DataPrecision> input_data_precisions;
+    std::vector<ONNXTensorElementDataType> input_data_types;
+    std::vector<std::vector<int64_t>> input_shapes;
+    
+    std::vector<Ort::AllocatedStringPtr> output_names_ptr;
+    std::vector<const char*> output_names;
+    
     std::shared_ptr<Ort::Env> env;
     std::shared_ptr<Ort::Session> session;
     std::vector<Ort::Value> input_tensors;
     std::vector<Ort::Value> output_tensors;
-    ONNXTensorElementDataType data_precision;
     int batch_size; 
     int num_threads;
 
