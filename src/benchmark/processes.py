@@ -166,10 +166,10 @@ class OpenVINOBenchmarkProcess(OpenVINOProcess):
 
         duration = self._get_benchmark_app_metric('Duration')
         iter_count = self._get_benchmark_app_metric('Count')
-        average_time = round(duration / iter_count, 2) if None not in (duration, iter_count) else None
+        average_time = round(duration / 1000 / iter_count, 3) if None not in (duration, iter_count) else None
 
         fps = self._get_benchmark_app_metric('Throughput')
-        latency = self._get_benchmark_app_metric('Median')
+        latency = round(self._get_benchmark_app_metric('Median') / 1000, 3)
 
         return average_time, fps, latency
 
