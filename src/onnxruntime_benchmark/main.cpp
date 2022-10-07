@@ -1,5 +1,8 @@
-#include "onnxruntime_benchmark.hpp"
+#include "onnxrrutime_model.hpp"
+#include "utils.hpp"
 #include <gflags/gflags.h>
+#include <opencv2/core.hpp>
+#include <opencv2/highgui.hpp>
 #include <iostream>
 
 namespace {
@@ -63,8 +66,17 @@ void parse(int argc, char *argv[]) {
 }
 }
 
-
 int main(int argc, char* argv[]) {
+    std::set_terminate(catcher);
+    logger::info << "Parsing input arguments" << logger::endl;
     parse(argc, argv);
+    logger::info << FLAGS_m << logger::endl;
+    logger::info << FLAGS_i << logger::endl;
+    auto img = cv::imread(FLAGS_i);
+    //cv::imshow("test", img);
+    //cv::waitKey(0);
+    ONNXModel model(FLAGS_nthreads);
+    model.read_model(FLAGS_m);
+    model.prepare_input_tensors({img});
     return 0;
 }

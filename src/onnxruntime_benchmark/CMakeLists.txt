@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.13)
 project(onnxruntime_benchmark)
 
-find_package(OpenCV REQUIRED core highgui)
+find_package(OpenCV REQUIRED core highgui videoio imgproc imgcodecs)
 
 add_subdirectory(thirdparty/gflags)
 add_subdirectory(thirdparty/nlohmann_json)
@@ -14,6 +14,7 @@ add_executable(${PROJECT_NAME} ${sources} ${headers})
 target_include_directories(${PROJECT_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/include" "${ONNXRuntime_DIR}/include"
     "${ONNXRuntime_DIR}/include/onnxruntime/core/session")
 
-target_link_libraries(${PROJECT_NAME} PRIVATE gflags nlohmann_json::nlohmann_json opencv_core "${ONNXRuntime_DIR}/build/libonnxruntime.so")
+message(STATUS ${OpenCV_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} PRIVATE gflags nlohmann_json::nlohmann_json ${OpenCV_LIBRARIES} "${ONNXRuntime_DIR}/build/libonnxruntime.so")
 
-set_target_properties(${PROJECT_NAME} PROPERTIES CXX_STANDARD 14 LINKER_LANGUAGE CXX)
+set_target_properties(${PROJECT_NAME} PROPERTIES CXX_STANDARD 17 LINKER_LANGUAGE CXX)
