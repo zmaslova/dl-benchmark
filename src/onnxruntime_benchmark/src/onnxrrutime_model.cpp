@@ -34,15 +34,24 @@ void ONNXModel::get_input_output_info() {
         // get input name
         auto input_name = session->GetInputNameAllocated(i, allocator);
         input_names.push_back(input_name.get());
+        input_names_ptr.push_back(std::move(input_name));
         // get input type
         auto type_info = session->GetInputTypeInfo(i);
         auto tensor_info = type_info.GetTensorTypeAndShapeInfo();
         ONNXTensorElementDataType type = tensor_info.GetElementType();
+        input_data_types.push_back(type);
+        input_data_precisions.push_back(get_data_precision(type));
+
         // get input shapes/dims
-        auto input_node_dims = tensor_info.GetShape();
+        auto input_node_shape = tensor_info.GetShape();
+        input_shapes.push_back(input_node_shape);
         logger::info << "\t" << input_names[i] << ": " << get_precision_str(get_data_precision(type)) << " ";
-        print_dims(input_node_dims, logger::info);
+        print_dims(input_node_shape, logger::info);
         logger::info << logger::endl;
+    }
+
+    if (batch_size == 0) {
+        batch_size = input_shapes[0][0]; // TODO: extend to support various layouts (with or without batch)
     }
 
     // Get outputs from model
@@ -51,14 +60,15 @@ void ONNXModel::get_input_output_info() {
         // get output name
         auto output_name = session->GetOutputNameAllocated(i, allocator);
         output_names.push_back(output_name.get());
+        output_names_ptr.push_back(std::move(output_name));
         // get output type
         auto type_info = session->GetOutputTypeInfo(i);
         auto tensor_info = type_info.GetTensorTypeAndShapeInfo();
         ONNXTensorElementDataType type = tensor_info.GetElementType();
         // get output shapes/dims
-        auto output_node_dims = tensor_info.GetShape();
+        auto output_node_shape = tensor_info.GetShape();
         logger::info << "\t" << output_names[i] << ": " << get_precision_str(get_data_precision(type)) << " ";
-        print_dims(output_node_dims, logger::info);
+        print_dims(output_node_shape, logger::info);
         logger::info << logger::endl;
     }
 
@@ -66,9 +76,16 @@ void ONNXModel::get_input_output_info() {
 }
 
 void ONNXModel::prepare_input_tensors(const std::vector<std::string>& input_files) {
-
+    input_tensors.emplace_back(get_image_tensor(input_files, {input_names[0], input_shapes[0], input_data_precisions[0], input_data_types[0]}, batch_size));
 }
 
 void ONNXModel::infer() {
+    logger::info << input_names[0] << logger::endl;
+    auto output_tensors = session->Run(Ort::RunOptions{nullptr}, input_names.data(), input_tensors.data(), input_names.size(), output_names.data(), output_names.size());
+    float* floatarr = output_tensors.front().GetTensorMutableData<float>();
 
+    // score the model, and print scores for first 5 classes
+    for (int i = 0; i < 5; i++) {
+        std::cout << "Score for class [" << i << "] =  " << floatarr[i] << '\n';
+    }
 }

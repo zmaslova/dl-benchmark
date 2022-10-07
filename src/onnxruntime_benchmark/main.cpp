@@ -78,5 +78,6 @@ int main(int argc, char* argv[]) {
     //cv::waitKey(0);
     ONNXModel model(FLAGS_m, FLAGS_nthreads, FLAGS_b);
     model.prepare_input_tensors({FLAGS_i});
+    model.infer();
     return 0;
 }
