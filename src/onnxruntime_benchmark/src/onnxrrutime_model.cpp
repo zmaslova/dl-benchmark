@@ -5,7 +5,13 @@
 #include <opencv2/core/mat.hpp>
 #include <iostream>
 #include <string>
+#include <vector>
 
+ONNXModel::ONNXModel(const std::string& model_file, int num_threads, int batch_size)
+    : num_threads(num_threads), batch_size(batch_size) {
+    read_model(model_file);
+    get_input_output_info();
+}
 
 void ONNXModel::read_model(const std::string model_path) {
     env = std::make_shared<Ort::Env>(ORT_LOGGING_LEVEL_ERROR, "ORT Bench");
@@ -18,12 +24,11 @@ void ONNXModel::read_model(const std::string model_path) {
         session_options.SetIntraOpNumThreads(num_threads);
     }
     session =  std::make_shared<Ort::Session>(*env, model_path.c_str(), session_options);
-
 }
 
-void ONNXModel::prepare_input_tensors(std::vector<cv::Mat> imgs) {
+void ONNXModel::get_input_output_info() {
     auto allocator = Ort::AllocatorWithDefaultOptions();
-    // Get input from net
+    // Get input from model
     logger::info << "Model inputs:" << logger::endl;
     for (size_t i = 0; i < session->GetInputCount(); ++i) {
         // get input name
@@ -35,17 +40,12 @@ void ONNXModel::prepare_input_tensors(std::vector<cv::Mat> imgs) {
         ONNXTensorElementDataType type = tensor_info.GetElementType();
         // get input shapes/dims
         auto input_node_dims = tensor_info.GetShape();
-
         logger::info << "\t" << input_names[i] << ": " << get_precision_str(get_data_precision(type)) << " ";
-        logger::info << "[";
-        for (size_t j = 0; j < input_node_dims.size() - 1; ++j) {
-             logger::info << input_node_dims[j] << ","; 
-        }
-        logger::info << input_node_dims.back() <<  "]" << logger::endl;
-
+        print_dims(input_node_dims, logger::info);
+        logger::info << logger::endl;
     }
 
-    // Get outputs from 
+    // Get outputs from model
     logger::info << "Model outputs:" << logger::endl;
     for (size_t i = 0; i < session->GetOutputCount(); ++i) {
         // get output name
@@ -57,13 +57,18 @@ void ONNXModel::prepare_input_tensors(std::vector<cv::Mat> imgs) {
         ONNXTensorElementDataType type = tensor_info.GetElementType();
         // get output shapes/dims
         auto output_node_dims = tensor_info.GetShape();
-
         logger::info << "\t" << output_names[i] << ": " << get_precision_str(get_data_precision(type)) << " ";
-        logger::info << "[";
-        for (size_t j = 0; j < output_node_dims.size() - 1; ++j) {
-             logger::info << output_node_dims[j] << ","; 
-        }
-        logger::info << output_node_dims.back() <<  "]" << logger::endl;
-
+        print_dims(output_node_dims, logger::info);
+        logger::info << logger::endl;
     }
+
+    //input_tensors.emplace_back(get_tensor_from_image())
+}
+
+void ONNXModel::prepare_input_tensors(const std::vector<std::string>& input_files) {
+
+}
+
+void ONNXModel::infer() {
+
 }
