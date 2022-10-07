@@ -69,14 +69,14 @@ void parse(int argc, char *argv[]) {
 int main(int argc, char* argv[]) {
     std::set_terminate(catcher);
     logger::info << "Parsing input arguments" << logger::endl;
+    logger::info << logger::boolalpha << false << logger::endl;
     parse(argc, argv);
     logger::info << FLAGS_m << logger::endl;
     logger::info << FLAGS_i << logger::endl;
     auto img = cv::imread(FLAGS_i);
     //cv::imshow("test", img);
     //cv::waitKey(0);
-    ONNXModel model(FLAGS_nthreads);
-    model.read_model(FLAGS_m);
-    model.prepare_input_tensors({img});
+    ONNXModel model(FLAGS_m, FLAGS_nthreads, FLAGS_b);
+    model.prepare_input_tensors({FLAGS_i});
     return 0;
 }

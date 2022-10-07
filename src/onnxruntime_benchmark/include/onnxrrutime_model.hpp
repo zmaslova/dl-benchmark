@@ -1,11 +1,13 @@
 #pragma once
-
 #include "logger.hpp"
+#include "utils.hpp"
 #include <onnxruntime_cxx_api.h>
 #include <opencv2/core/mat.hpp>
+#include <cstdint>
 #include <map>
 #include <memory>
 #include <string>
+#include <vector>
 
 class ONNXModel {
  private:
@@ -16,11 +18,14 @@ class ONNXModel {
     std::vector<Ort::Value> input_tensors;
     std::vector<Ort::Value> output_tensors;
     ONNXTensorElementDataType data_precision;
-    int num_threads = 4;
+    int batch_size; 
+    int num_threads;
+
+    void read_model(const std::string model);
+    void get_input_output_info();
 
  public:
-    ONNXModel(int num_threads) : num_threads(num_threads) {}; 
-    void read_model(const std::string model);
-    void prepare_input_tensors(std::vector<cv::Mat> imgs);
+    ONNXModel(const std::string& model_file, int num_threads, int batch_size); 
+    void prepare_input_tensors(const std::vector<std::string>& input_files);
     void infer();
 };
