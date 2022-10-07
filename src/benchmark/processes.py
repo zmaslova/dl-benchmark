@@ -96,7 +96,7 @@ class OpenVINOProcess(ProcessHandler, ABC):
             return SyncOpenVINOProcess(test, executor, log)
         elif mode == 'async':
             return AsyncOpenVINOProcess(test, executor, log)
-        elif mode == 'benchmark':
+        elif mode == 'ovbenchmarkpython':
             return OpenVINOBenchmarkPythonProcess(test, executor, log)
 
 

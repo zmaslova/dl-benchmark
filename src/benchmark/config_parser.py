@@ -340,7 +340,7 @@ class OpenVINOParameters(ParametersMethods):
         if self._mode_is_correct(mode):
             self.mode = mode.title()
         else:
-            raise ValueError('Mode is required parameter. Mode can only take values: Sync, Async.')
+            raise ValueError('Mode is required parameter. Mode can only take values: Sync, Async, OVBenchmarkPython.')
         if self._extension_path_is_correct(extension):
             self.extension = extension
         else:
@@ -362,12 +362,12 @@ class OpenVINOParameters(ParametersMethods):
                     self.nstreams = stream_count
                 else:
                     raise ValueError('Stream count can only take values: integer greater than zero.')
-        if self.mode == 'Benchmark':
+        if self.mode == 'Ovbenchmarkpython':
             self.perf_hint = perf_hint
 
     @staticmethod
     def _mode_is_correct(mode):
-        const_correct_mode = ['sync', 'async', 'benchmark']
+        const_correct_mode = ['sync', 'async', 'ovbenchmarkpython']
         if mode.lower() in const_correct_mode:
             return True
         return False
