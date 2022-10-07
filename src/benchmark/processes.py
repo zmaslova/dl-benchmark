@@ -59,7 +59,7 @@ class ProcessHandler(metaclass=abc.ABCMeta):
             self.__log.info(f'End inference test on model : {self._test.model.name}')
         else:
             self.__log.warning(f'Inference test on model: {self._test.model.name} was ended with error. '
-                                  'Process logs:')
+                               'Process logs:')
             self.__print_error()
 
     def get_status(self):
@@ -90,18 +90,6 @@ class OpenVINOProcess(ProcessHandler, ABC):
         super().__init__(test, executor, log)
 
     @staticmethod
-    def __add_extension_for_cmd_line(command_line, extension):
-        return '{0} -l {1}'.format(command_line, extension)
-
-    @staticmethod
-    def __add_nthreads_for_cmd_line(command_line, nthreads):
-        return '{0} -nthreads {1}'.format(command_line, nthreads)
-
-    @staticmethod
-    def __add_raw_output_time_for_cmd_line(command_line, raw_output):
-        return '{0} {1}'.format(command_line, raw_output)
-
-    @staticmethod
     def create_process(test, executor, log):
         mode = test.dep_parameters.mode.lower()
         if mode == 'sync':
@@ -109,31 +97,10 @@ class OpenVINOProcess(ProcessHandler, ABC):
         elif mode == 'async':
             return AsyncOpenVINOProcess(test, executor, log)
         elif mode == 'benchmark':
-            return OpenVINOBenchmarkProcessPython(test, executor, log)
-
-    def _fill_command_line(self):
-        model_xml = self._test.model.model
-        model_bin = self._test.model.weight
-        dataset = self._test.dataset.path
-        batch = self._test.indep_parameters.batch_size
-        device = self._test.indep_parameters.device
-        iteration = self._test.indep_parameters.iteration
-
-        command_line = '-m {0} -w {1} -i {2} -b {3} -d {4} -ni {5}'.format(
-            model_xml, model_bin, dataset, batch, device, iteration)
-
-        extension = self._test.dep_parameters.extension
-        if extension:
-            command_line = OpenVINOProcess.__add_extension_for_cmd_line(command_line, extension)
-        nthreads = self._test.dep_parameters.nthreads
-        if nthreads:
-            command_line = OpenVINOProcess.__add_nthreads_for_cmd_line(command_line, nthreads)
-        command_line = OpenVINOProcess.__add_raw_output_time_for_cmd_line(command_line, '--raw_output true')
-
-        return command_line
+            return OpenVINOBenchmarkPythonProcess(test, executor, log)
 
 
-class OpenVINOBenchmarkProcessPython(OpenVINOProcess):
+class OpenVINOBenchmarkPythonProcess(OpenVINOProcess):
     def __init__(self, test, executor, log):
         super().__init__(test, executor, log)
 
@@ -158,7 +125,7 @@ class OpenVINOBenchmarkProcessPython(OpenVINOProcess):
 
     @staticmethod
     def create_process(test, executor, log):
-        return OpenVINOBenchmarkProcessPython(test, executor, log)
+        return OpenVINOBenchmarkPythonProcess(test, executor, log)
 
     def get_performance_metrics(self):
         if self._row_output[0] != 0 or len(self._output) == 0:
@@ -184,15 +151,15 @@ class OpenVINOBenchmarkProcessPython(OpenVINOProcess):
 
         extension = self._test.dep_parameters.extension
         if extension:
-            arguments = OpenVINOBenchmarkProcessPython.__add_extension_for_cmd_line(arguments, extension, device)
+            arguments = OpenVINOBenchmarkPythonProcess.__add_extension_for_cmd_line(arguments, extension, device)
 
         nthreads = self._test.dep_parameters.nthreads
         if nthreads:
-            arguments = OpenVINOBenchmarkProcessPython.__add_nthreads_for_cmd_line(arguments, nthreads)
+            arguments = OpenVINOBenchmarkPythonProcess.__add_nthreads_for_cmd_line(arguments, nthreads)
 
         perf_hint = self._test.dep_parameters.perf_hint
         if perf_hint:
-            arguments = OpenVINOBenchmarkProcessPython.__add_perf_hint_for_cmd_line(arguments, perf_hint)
+            arguments = OpenVINOBenchmarkPythonProcess.__add_perf_hint_for_cmd_line(arguments, perf_hint)
 
         command_line = f'benchmark_app {arguments}'
         return command_line
@@ -213,7 +180,45 @@ class OpenVINOBenchmarkProcessPython(OpenVINOProcess):
                     return None
 
 
-class SyncOpenVINOProcess(OpenVINOProcess):
+class OpenVINOPythonAPIProcess(OpenVINOProcess):
+    def __init__(self, test, executor, log):
+        super().__init__(test, executor, log)
+
+    @staticmethod
+    def __add_extension_for_cmd_line(command_line, extension):
+        return '{0} -l {1}'.format(command_line, extension)
+
+    @staticmethod
+    def __add_nthreads_for_cmd_line(command_line, nthreads):
+        return '{0} -nthreads {1}'.format(command_line, nthreads)
+
+    @staticmethod
+    def __add_raw_output_time_for_cmd_line(command_line, raw_output):
+        return '{0} {1}'.format(command_line, raw_output)
+
+    def _fill_command_line(self):
+        model_xml = self._test.model.model
+        model_bin = self._test.model.weight
+        dataset = self._test.dataset.path
+        batch = self._test.indep_parameters.batch_size
+        device = self._test.indep_parameters.device
+        iteration = self._test.indep_parameters.iteration
+
+        command_line = '-m {0} -w {1} -i {2} -b {3} -d {4} -ni {5}'.format(
+            model_xml, model_bin, dataset, batch, device, iteration)
+
+        extension = self._test.dep_parameters.extension
+        if extension:
+            command_line = OpenVINOPythonAPIProcess.__add_extension_for_cmd_line(command_line, extension)
+        nthreads = self._test.dep_parameters.nthreads
+        if nthreads:
+            command_line = OpenVINOPythonAPIProcess.__add_nthreads_for_cmd_line(command_line, nthreads)
+        command_line = OpenVINOPythonAPIProcess.__add_raw_output_time_for_cmd_line(command_line, '--raw_output true')
+
+        return command_line
+
+
+class SyncOpenVINOProcess(OpenVINOPythonAPIProcess):
     def __init__(self, test, executor, log):
         super().__init__(test, executor, log)
 
@@ -239,7 +244,7 @@ class SyncOpenVINOProcess(OpenVINOProcess):
         return command_line
 
 
-class AsyncOpenVINOProcess(OpenVINOProcess):
+class AsyncOpenVINOProcess(OpenVINOPythonAPIProcess):
     def __init__(self, test, executor, log):
         super().__init__(test, executor, log)
 
