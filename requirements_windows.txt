@@ -4,5 +4,6 @@ wmi
 opencv-python
 PyQt5
 pandas
+pathlib
 xlsxwriter
 iteration_utilities

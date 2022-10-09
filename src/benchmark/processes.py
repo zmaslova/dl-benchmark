@@ -1,6 +1,7 @@
 import abc
 import os
 import platform
+import pandas as pd
 from abc import ABC
 
 
@@ -24,9 +25,9 @@ class ProcessHandler(metaclass=abc.ABCMeta):
         return cmd_python_version
 
     @staticmethod
-    def get_process(test, executor, log):
+    def get_process(test, executor, log, cpp_benchmark_path=None):
         if test.indep_parameters.inference_framework == 'OpenVINO DLDT':
-            return OpenVINOProcess.create_process(test, executor, log)
+            return OpenVINOProcess.create_process(test, executor, log, cpp_benchmark_path)
         elif test.indep_parameters.inference_framework == 'Caffe':
             return IntelCaffeProcess.create_process(test, executor, log)
         elif test.indep_parameters.inference_framework == 'TensorFlow':
@@ -101,12 +102,16 @@ class OpenVINOProcess(ProcessHandler, ABC):
         return '{0} {1}'.format(command_line, raw_output)
 
     @staticmethod
-    def create_process(test, executor, log):
+    def create_process(test, executor, log, cpp_benchmark_path=None):
         mode = test.dep_parameters.mode.lower()
         if mode == 'sync':
             return SyncOpenVINOProcess(test, executor, log)
         elif mode == 'async':
             return AsyncOpenVINOProcess(test, executor, log)
+        elif mode == 'throughput':
+            return CPPBenchmarkThroughputProcess(test, executor, log, cpp_benchmark_path)
+        elif mode == 'latency':
+            return CPPBenchmarkLatencyProcess(test, executor, log, cpp_benchmark_path)
 
     def _fill_command_line(self):
         model_xml = self._my_test.model.model
@@ -128,6 +133,26 @@ class OpenVINOProcess(ProcessHandler, ABC):
         command_line = OpenVINOProcess.__add_raw_output_time_for_cmd_line(command_line, '--raw_output true')
 
         return command_line
+
+    def _fill_command_line_cppbench(self):
+        model_xml = self._my_test.model.model
+        dataset = self._my_test.dataset.path
+        batch = self._my_test.indep_parameters.batch_size
+        device = self._my_test.indep_parameters.device
+        iteration = self._my_test.indep_parameters.iteration
+
+        command_line = '-m {0} -i {1} -d {2} -b {3} -niter {4} -report_type "no_counters" -report_folder .'.format(
+            model_xml, dataset, device, batch, iteration)
+
+        extension = self._my_test.dep_parameters.extension
+        if extension:
+            command_line = OpenVINOProcess.__add_extension_for_cmd_line(command_line, extension)
+        nthreads = self._my_test.dep_parameters.nthreads
+        if nthreads:
+            command_line = OpenVINOProcess.__add_nthreads_for_cmd_line(command_line, nthreads)
+
+        return command_line
+
 
 
 class SyncOpenVINOProcess(OpenVINOProcess):
@@ -152,6 +177,54 @@ class SyncOpenVINOProcess(OpenVINOProcess):
 
         common_params = super()._fill_command_line()
         command_line = '{0} {1} {2}'.format(python, path_to_sync_scrypt, common_params)
+
+        return command_line
+
+
+class CPPBenchmarkThroughputProcess(OpenVINOProcess):
+    def __init__(self, test, executor, log, cpp_benchmark_path):
+        self.benchmark_path = cpp_benchmark_path
+        super().__init__(test, executor, log)
+
+    def get_performance_metrics(self):
+        df_report = pd.read_csv('benchmark_report.csv', header=None, sep='\n')
+        df_report.columns = ['parameter']
+        df_report[["parameter", "value"]] = df_report["parameter"].str.split(';', 1, expand=True)
+        df_report = df_report[df_report['value'] != '']
+        df_report = df_report.T
+        df_report.dropna(axis=1, how='any', inplace=True)
+
+        self.headers = ';'.join(df_report.iloc[[0]].values.flatten().tolist())
+        self.values = ''.join(df_report.iloc[[1]].values.flatten().tolist())
+        return []
+
+    def _fill_command_line(self):
+        common_params = super()._fill_command_line_cppbench()
+        command_line = '{0} {1} -hint throughput'.format(self.benchmark_path, common_params)
+
+        return command_line
+
+
+class CPPBenchmarkLatencyProcess(OpenVINOProcess):
+    def __init__(self, test, executor, log, cpp_benchmark_path):
+        self.benchmark_path = cpp_benchmark_path
+        super().__init__(test, executor, log)
+
+    def get_performance_metrics(self):
+        df_report = pd.read_csv('benchmark_report.csv', header=None, sep='\n')
+        df_report.columns = ['parameter']
+        df_report[["parameter", "value"]] = df_report["parameter"].str.split(';', 1, expand=True)
+        df_report = df_report[df_report['value'] != '']
+        df_report = df_report.T
+        df_report.dropna(axis=1, how='any', inplace=True)
+
+        self.headers = ';'.join(df_report.iloc[[0]].values.flatten().tolist())
+        self.values = ''.join(df_report.iloc[[1]].values.flatten().tolist())
+        return []
+
+    def _fill_command_line(self):
+        common_params = super()._fill_command_line_cppbench()
+        command_line = '{0} {1} -hint latency'.format(self.benchmark_path, common_params)
 
         return command_line
 

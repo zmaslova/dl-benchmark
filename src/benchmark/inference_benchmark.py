@@ -3,6 +3,8 @@ import logging as log
 import os
 import sys
 
+from pathlib import Path
+
 import config_parser
 from output import OutputHandler
 from processes import ProcessHandler
@@ -27,6 +29,12 @@ def cli_argument_parser():
                         choices=['host_machine', 'docker_container'],
                         help='Environment ro execute test: host_machine, docker_container',
                         default='host_machine')
+    parser.add_argument('-b', '--cpp_benchmark_path',
+                        type=str,
+                        dest='cpp_benchmark_path',
+                        help='Path to pre-built C++ Benchmark App',
+                        default=None,
+                        required=False)
 
     args = parser.parse_args()
 
@@ -36,14 +44,21 @@ def cli_argument_parser():
     return args
 
 
-def inference_benchmark(executor_type, test_list, output_handler, log):
+def inference_benchmark(executor_type, test_list, output_handler, log, cpp_benchmark_path):
     process_executor = Executor.get_executor(executor_type, log)
     for test in test_list:
-        test_process = ProcessHandler.get_process(test, process_executor, log)
+        test_process = ProcessHandler.get_process(test, process_executor, log, cpp_benchmark_path)
         test_process.execute()
 
         log.info('Saving test result in file')
-        output_handler.add_row_to_table(process_executor, test, test_process)
+        try:
+            output_handler.add_row_to_table(executor=process_executor, test=test, process=test_process)
+        except Exception:
+            log.warning('C++ Benchmark results will be written to cppbench_results.csv')
+            result_path = Path(output_handler.get_table_name()).parent / "cppbench_results.csv"
+            test_process.get_performance_metrics()
+            output_handler.create_table(custom_table=result_path, custom_headers=test_process.headers)
+            output_handler.add_row_to_table(filename=result_path, row=test_process.values)
 
 
 if __name__ == '__main__':
@@ -64,7 +79,7 @@ if __name__ == '__main__':
 
         log.info(f'Start {len(test_list)} inference tests')
 
-        inference_benchmark(args.executor_type, test_list, output_handler, log)
+        inference_benchmark(args.executor_type, test_list, output_handler, log, args.cpp_benchmark_path)
 
         log.info('Inference tests completed')
     except Exception as exp:
