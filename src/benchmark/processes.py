@@ -134,14 +134,16 @@ class OpenVINOBenchmarkPythonProcess(OpenVINOProcess):
         if self._row_output[0] != 0 or len(self._output) == 0:
             return None, None, None
 
+        # calculate average time of single pass metric to align output with custom launchers
         duration = self._get_benchmark_app_metric('Duration')
         iter_count = self._get_benchmark_app_metric('Count')
-        average_time = round(duration / 1000 / iter_count, 3) if None not in (duration, iter_count) else None
+        average_time_of_single_pass = (round(duration / 1000 / iter_count, 3)
+                                       if None not in (duration, iter_count) else None)
 
         fps = self._get_benchmark_app_metric('Throughput')
         latency = round(self._get_benchmark_app_metric('Median') / 1000, 3)
 
-        return average_time, fps, latency
+        return average_time_of_single_pass, fps, latency
 
     def _fill_command_line(self):
         model_xml = self._test.model.model
