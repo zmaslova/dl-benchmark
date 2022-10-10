@@ -87,8 +87,8 @@ class ProcessHandler(metaclass=abc.ABCMeta):
                 self.__log.error(f'    {line}')
 
     def __save_failed_test_log(self):
-        logname = '{0}_{1}.log'.format(self._my_test.model.name,
-                                       self._my_test.indep_parameters.inference_framework)
+        logname = '{0}_{1}.log'.format(self._test.model.name,
+                                       self._test.indep_parameters.inference_framework)
         # TODO(z.maslova@yadro.com): create more complex file name
         out = self._output
         with open(logname, 'w') as file:
@@ -142,7 +142,7 @@ class OpenVINOBenchmarkPythonProcess(OpenVINOProcess):
         return OpenVINOBenchmarkPythonProcess(test, executor, log)
 
     def get_performance_metrics(self):
-        if self._row_output[0] != 0 or len(self._output) == 0:
+        if self._status != 0 or len(self._output) == 0:
             return None, None, None
 
         # calculate average time of single pass metric to align output with custom launchers
