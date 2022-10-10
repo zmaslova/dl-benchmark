@@ -79,10 +79,10 @@ class ProcessHandler(metaclass=abc.ABCMeta):
         for line in out:
             if line.rfind('ERROR! :') != -1:
                 is_error = True
-                self.__log.error('    {0}'.format(line[8:]))
+                self.__log.error(f'    {line[8:]}')
                 continue
             if is_error:
-                self.__log.error('    {0}'.format(line))
+                self.__log.error(f'    {line}')
 
 
 class OpenVINOProcess(ProcessHandler, ABC):
@@ -117,14 +117,14 @@ class OpenVINOBenchmarkPythonProcess(OpenVINOProcess):
     @staticmethod
     def __add_extension_for_cmd_line(command_line, extension, device):
         if 'GPU' in device:
-            return '{0} -c {1}'.format(command_line, extension)
+            return f'{command_line} -c {extension}'
         elif 'CPU' in device or 'MYRIAD' in device:
-            return '{0} -l {1}'.format(command_line, extension)
+            return f'{command_line} -l {extension}'
         return command_line
 
     @staticmethod
     def __add_nthreads_for_cmd_line(command_line, nthreads):
-        return '{0} -nthreads {1}'.format(command_line, nthreads)
+        return f'{command_line} -nthreads {nthreads}'
 
     @staticmethod
     def create_process(test, executor, log):
@@ -187,15 +187,15 @@ class OpenVINOPythonAPIProcess(OpenVINOProcess):
 
     @staticmethod
     def __add_extension_for_cmd_line(command_line, extension):
-        return '{0} -l {1}'.format(command_line, extension)
+        return f'{command_line} -l {extension}'
 
     @staticmethod
     def __add_nthreads_for_cmd_line(command_line, nthreads):
-        return '{0} -nthreads {1}'.format(command_line, nthreads)
+        return f'{command_line} -nthreads {nthreads}'
 
     @staticmethod
     def __add_raw_output_time_for_cmd_line(command_line, raw_output):
-        return '{0} {1}'.format(command_line, raw_output)
+        return f'{command_line} {raw_output}'
 
     def _fill_command_line(self):
         model_xml = self._test.model.model
@@ -205,8 +205,7 @@ class OpenVINOPythonAPIProcess(OpenVINOProcess):
         device = self._test.indep_parameters.device
         iteration = self._test.indep_parameters.iteration
 
-        command_line = '-m {0} -w {1} -i {2} -b {3} -d {4} -ni {5}'.format(
-            model_xml, model_bin, dataset, batch, device, iteration)
+        command_line = f'-m {model_xml} -w {model_bin} -i {dataset} -b {batch} -d {device} -ni {iteration}'
 
         extension = self._test.dep_parameters.extension
         if extension:
@@ -240,7 +239,7 @@ class SyncOpenVINOProcess(OpenVINOPythonAPIProcess):
         python = ProcessHandler._get_cmd_python_version()
 
         common_params = super()._fill_command_line()
-        command_line = '{0} {1} {2}'.format(python, path_to_sync_scrypt, common_params)
+        command_line = f'{python} {path_to_sync_scrypt} {common_params}'
 
         return command_line
 
@@ -251,11 +250,11 @@ class AsyncOpenVINOProcess(OpenVINOPythonAPIProcess):
 
     @staticmethod
     def __add_nstreams_for_cmd_line(command_line, nstreams):
-        return '{0} -nstreams {1}'.format(command_line, nstreams)
+        return f'{command_line} -nstreams {nstreams}'
 
     @staticmethod
     def __add_requests_for_cmd_line(command_line, requests):
-        return '{0} --requests {1}'.format(command_line, requests)
+        return f'{command_line} --requests {requests}'
 
     def get_performance_metrics(self):
         if self._row_output[0] != 0 or len(self._output) == 0:
@@ -273,7 +272,7 @@ class AsyncOpenVINOProcess(OpenVINOPythonAPIProcess):
         python = ProcessHandler._get_cmd_python_version()
 
         common_params = super()._fill_command_line()
-        command_line = '{0} {1} {2}'.format(python, path_to_async_scrypt, common_params)
+        command_line = f'{python} {path_to_async_scrypt} {common_params}'
         nstreams = self._test.dep_parameters.nstreams
         if nstreams:
             command_line = AsyncOpenVINOProcess.__add_nstreams_for_cmd_line(command_line, nstreams)
