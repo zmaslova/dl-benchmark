@@ -90,6 +90,10 @@ class OpenVINOProcess(ProcessHandler, ABC):
         super().__init__(test, executor, log)
 
     @staticmethod
+    def __add_nthreads_for_cmd_line(command_line, nthreads):
+        return f'{command_line} -nthreads {nthreads}'
+
+    @staticmethod
     def create_process(test, executor, log):
         mode = test.dep_parameters.mode.lower()
         if mode == 'sync':
@@ -123,10 +127,6 @@ class OpenVINOBenchmarkPythonProcess(OpenVINOProcess):
         return command_line
 
     @staticmethod
-    def __add_nthreads_for_cmd_line(command_line, nthreads):
-        return f'{command_line} -nthreads {nthreads}'
-
-    @staticmethod
     def create_process(test, executor, log):
         return OpenVINOBenchmarkPythonProcess(test, executor, log)
 
@@ -158,7 +158,7 @@ class OpenVINOBenchmarkPythonProcess(OpenVINOProcess):
 
         nthreads = self._test.dep_parameters.nthreads
         if nthreads:
-            arguments = OpenVINOBenchmarkPythonProcess.__add_nthreads_for_cmd_line(arguments, nthreads)
+            arguments = OpenVINOProcess.__add_nthreads_for_cmd_line(arguments, nthreads)
 
         arguments = OpenVINOBenchmarkPythonProcess.__add_perf_hint_for_cmd_line(arguments, self._perf_hint)
 
@@ -190,10 +190,6 @@ class OpenVINOPythonAPIProcess(OpenVINOProcess):
         return f'{command_line} -l {extension}'
 
     @staticmethod
-    def __add_nthreads_for_cmd_line(command_line, nthreads):
-        return f'{command_line} -nthreads {nthreads}'
-
-    @staticmethod
     def __add_raw_output_time_for_cmd_line(command_line, raw_output):
         return f'{command_line} {raw_output}'
 
@@ -212,7 +208,7 @@ class OpenVINOPythonAPIProcess(OpenVINOProcess):
             command_line = OpenVINOPythonAPIProcess.__add_extension_for_cmd_line(command_line, extension)
         nthreads = self._test.dep_parameters.nthreads
         if nthreads:
-            command_line = OpenVINOPythonAPIProcess.__add_nthreads_for_cmd_line(command_line, nthreads)
+            command_line = OpenVINOProcess.__add_nthreads_for_cmd_line(command_line, nthreads)
         command_line = OpenVINOPythonAPIProcess.__add_raw_output_time_for_cmd_line(command_line, '--raw_output true')
 
         return command_line
