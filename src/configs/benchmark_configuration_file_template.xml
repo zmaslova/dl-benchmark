@@ -22,7 +22,6 @@
         </FrameworkIndependent>
         <FrameworkDependent>
             <Mode></Mode>
-            <PerfHint></PerfHint>
             <Extension></Extension>
             <AsyncRequestCount></AsyncRequestCount>
             <ThreadCount></ThreadCount>

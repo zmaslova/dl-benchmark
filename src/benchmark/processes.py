@@ -96,13 +96,16 @@ class OpenVINOProcess(ProcessHandler, ABC):
             return SyncOpenVINOProcess(test, executor, log)
         elif mode == 'async':
             return AsyncOpenVINOProcess(test, executor, log)
-        elif mode == 'ovbenchmarkpython':
-            return OpenVINOBenchmarkPythonProcess(test, executor, log)
+        elif mode == 'ovbenchmark_python_latency':
+            return OpenVINOBenchmarkPythonProcess(test, executor, log, 'latency')
+        elif mode == 'ovbenchmark_python_throughput':
+            return OpenVINOBenchmarkPythonProcess(test, executor, log, 'throughput')
 
 
 class OpenVINOBenchmarkPythonProcess(OpenVINOProcess):
-    def __init__(self, test, executor, log):
+    def __init__(self, test, executor, log, perf_hint=''):
         super().__init__(test, executor, log)
+        self._perf_hint = perf_hint
 
     @staticmethod
     def __add_perf_hint_for_cmd_line(command_line, perf_hint):
@@ -157,9 +160,7 @@ class OpenVINOBenchmarkPythonProcess(OpenVINOProcess):
         if nthreads:
             arguments = OpenVINOBenchmarkPythonProcess.__add_nthreads_for_cmd_line(arguments, nthreads)
 
-        perf_hint = self._test.dep_parameters.perf_hint
-        if perf_hint:
-            arguments = OpenVINOBenchmarkPythonProcess.__add_perf_hint_for_cmd_line(arguments, perf_hint)
+        arguments = OpenVINOBenchmarkPythonProcess.__add_perf_hint_for_cmd_line(arguments, self._perf_hint)
 
         command_line = f'benchmark_app {arguments}'
         return command_line

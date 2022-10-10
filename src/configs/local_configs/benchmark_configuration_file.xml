@@ -22,7 +22,6 @@
         </FrameworkIndependent>
         <FrameworkDependent>
             <Mode>Async</Mode>
-            <PerfHint>latency</PerfHint>
             <Extension></Extension>
             <AsyncRequestCount>1</AsyncRequestCount>
             <ThreadCount></ThreadCount>
@@ -51,7 +50,6 @@
         </FrameworkIndependent>
         <FrameworkDependent>
             <Mode>Async</Mode>
-            <PerfHint>latency</PerfHint>
             <Extension></Extension>
             <AsyncRequestCount>1</AsyncRequestCount>
             <ThreadCount></ThreadCount>
