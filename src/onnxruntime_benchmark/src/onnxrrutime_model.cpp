@@ -4,11 +4,20 @@
 #include <onnxruntime_cxx_api.h>
 #include <opencv2/core/mat.hpp>
 #include <iostream>
+#include <numeric>
 #include <string>
 #include <vector>
 
-ONNXModel::ONNXModel(const std::string& model_file, int num_threads, int batch_size)
-    : num_threads(num_threads), batch_size(batch_size) {
+ONNXModel::ONNXModel(const std::string& model_file, int batch_size,const std::string& layout_string,
+    const std::string& mean_string, const std::string& scale_string, int num_threads)
+    : batch_size(batch_size), num_threads(num_threads), layout(layout_string), mean(3, 0), scale(3, 1) {
+    
+    if (!mean_string.empty()) {
+        mean = string_to_vec(mean_string);
+    }
+    if (!scale_string.empty()) {
+        scale = string_to_vec(scale_string);
+    }
     read_model(model_file);
     get_input_output_info();
 }
@@ -76,16 +85,26 @@ void ONNXModel::get_input_output_info() {
 }
 
 void ONNXModel::prepare_input_tensors(const std::vector<std::string>& input_files) {
-    input_tensors.emplace_back(get_image_tensor(input_files, {input_names[0], input_shapes[0], input_data_precisions[0], input_data_types[0]}, batch_size));
+    input_tensors.emplace_back(get_image_tensor(input_files, {input_names[0], input_shapes[0], input_data_precisions[0], input_data_types[0], mean, scale}, batch_size));
 }
 
 void ONNXModel::infer() {
     logger::info << input_names[0] << logger::endl;
     auto output_tensors = session->Run(Ort::RunOptions{nullptr}, input_names.data(), input_tensors.data(), input_names.size(), output_names.data(), output_names.size());
-    float* floatarr = output_tensors.front().GetTensorMutableData<float>();
 
-    // score the model, and print scores for first 5 classes
-    for (int i = 0; i < 5; i++) {
-        std::cout << "Score for class [" << i << "] =  " << floatarr[i] << '\n';
+    float* floatarr = output_tensors.front().GetTensorMutableData<float>();
+    std::vector<float> res(floatarr, floatarr + 1000);
+    std::vector<int> idx(1000);
+    std::iota(idx.begin(), idx.end(), 0);
+    auto max = std::max_element(res.begin(), res.end());
+    std::partial_sort(idx.begin(), idx.begin() + 5, idx.end(), [&res](int l, int r){
+        return  res[l] > res[r];
+    });
+    for (size_t i = 0; i < 5; ++i) {
+        logger::info << "id: " << idx[i] << " score " << res[idx[i]] << logger::endl;
     }
+    // // score the model, and print scores for first 5 classes
+    // for (int i = 0; i < 5; i++) {
+    //     std::cout << "Score for class [" << i << "] =  " << floatarr[i] << '\n';
+    // }
 }
