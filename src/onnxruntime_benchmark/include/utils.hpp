@@ -1,7 +1,6 @@
 #pragma once
 #include "logger.hpp"
 #include <onnxruntime_cxx_api.h>
-#include <opencv2/core/mat.hpp>
 #include <cstdint>
 #include <exception>
 #include <map>
@@ -50,38 +49,18 @@ static const std::map<std::string, DataPrecision> precision_to_str_map = {
     { "MIXED",  DataPrecision::MIXED },
 };
 
-struct ONNXTensorDescr {
-   std::string name;
-   std::vector<int64_t> shape;
-   DataPrecision precision;
-   ONNXTensorElementDataType elem_type;
-   const std::vector<float> mean;
-   const std::vector<float> scale;
-};
+std::map<std::string, std::vector<std::string>> parse_input_files_arguments(const std::vector<std::string>& args, size_t max_files = 20);
 
+std::map<std::string, std::string> parse_shape_or_layout_string(const std::string& parameter_string);
 
-std::vector<std::string> parse_input_args();
+std::vector<int64_t> parse_shape_string();
 
 DataPrecision get_data_precision(ONNXTensorElementDataType type);
 
 std::string get_precision_str(DataPrecision p);
 
-Ort::Value get_image_tensor(const std::vector<std::string>& files, const ONNXTensorDescr& tensor, int batch_size);
-
-Ort::Value get_binary_tensor(const std::vector<std::string>& files, const ONNXTensorDescr& tensor, int batch_size);
-
 std::vector<float> string_to_vec(const std::string& mean_scale);
 
-template <typename T>
-const T get_mat_value(const cv::Mat& mat, size_t h, size_t w, size_t c) {
-    switch (mat.type()) {
-        case CV_8UC1:  return (T)mat.at<uchar>(h, w);
-        case CV_8UC3:  return (T)mat.at<cv::Vec3b>(h, w)[c];
-        case CV_32FC1: return (T)mat.at<float>(h, w);
-        case CV_32FC3: return (T)mat.at<cv::Vec3f>(h, w)[c];
-    }
-    throw std::runtime_error("cv::Mat type is not recognized");
-};
 
 template<class OutStream> 
 void print_dims(std::vector<int64_t> dims, OutStream s) {
