@@ -58,8 +58,8 @@ Ort::Value create_tensor_from_image(const std::vector<std::string>& files, const
         cv::resize(tmp, tmp, cv::Size(width, height));
         cv::cvtColor(tmp, tmp,
                  cv::ColorConversionCodes::COLOR_BGR2RGB); // ?
-        cv::imshow("Test", tmp);
-        cv::waitKey(0);
+        // cv::imshow("Test", tmp);
+        // cv::waitKey(0);
         for (size_t w = 0; w < width; ++w) {
             for (size_t h = 0; h < height; ++h) {
                 for (size_t ch = 0; ch < channels; ++ch) {

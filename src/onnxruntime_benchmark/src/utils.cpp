@@ -130,32 +130,37 @@ std::map<std::string, std::string> parse_shape_or_layout_string(const std::strin
     // Parse parameter string like "input0[value0],input1[value1]" or "[value]" (applied to all
     // inputs)
     std::map<std::string, std::string> return_value;
-    // std::string search_string = parameter_string;
-    // auto start_pos = search_string.find_first_of('[');
-    // auto input_name = search_string.substr(0, start_pos);
-    // while (start_pos != std::string::npos) {
-    //     auto end_pos = search_string.find_first_of(']');
-    //     if (end_pos == std::string::npos)
-    //         break;
-    //     if (start_pos)
-    //         input_name = search_string.substr(0, start_pos);
-    //     auto input_value = search_string.substr(start_pos + 1, end_pos - start_pos - 1);
-    //     if (!input_name.empty()) {
-    //         return_value[parameter_name_to_tensor_name(input_name, input_info)].push_back(input_value);
-    //     } else {
-    //         for (auto& item : input_info) {
-    //             return_value[item.get_any_name()].push_back(input_value);
-    //         }
-    //     }
-    //     search_string = search_string.substr(end_pos + 1);
-    //     if (search_string.empty() || (search_string.front() != ',' && search_string.front() != '['))
-    //         break;
-    //     if (search_string.front() == ',')
-    //         search_string = search_string.substr(1);
-    //     start_pos = search_string.find_first_of('[');
-    // }
-    // if (!search_string.empty())
-    //     throw std::logic_error("Can't parse input parameter string: " + parameter_string);
+    std::string search_string = parameter_string;
+    auto start_pos = search_string.find_first_of('[');
+    auto input_name = search_string.substr(0, start_pos);
+    while (start_pos != std::string::npos) {
+        auto end_pos = search_string.find_first_of(']');
+        if (end_pos == std::string::npos) {
+            break;
+        }
+        if (start_pos) {
+            input_name = search_string.substr(0, start_pos);
+        }
+
+        auto input_value = search_string.substr(start_pos + 1, end_pos - start_pos - 1);
+        if (!input_name.empty()) {
+            return_value[input_name] = input_value;
+        } else {
+            return_value[""] = input_value;
+        }
+    
+        search_string = search_string.substr(end_pos + 1);
+        if (search_string.empty() || (search_string.front() != ',' && search_string.front() != '['))
+            break;
+        if (search_string.front() == ',')
+            search_string = search_string.substr(1);
+        start_pos = search_string.find_first_of('[');
+    }
+
+    if (!search_string.empty()) {
+        throw std::invalid_argument("Can't parse input parameter string: " + parameter_string);
+    }
+
     return return_value;
 }
 
@@ -164,7 +169,7 @@ DataPrecision get_data_precision(ONNXTensorElementDataType type) {
         return onnx_dtype_to_precision_map.at(type);
     }
     else {
-        throw std::runtime_error("ConvertToDataPrecision: does not support element type " + std::to_string(type));
+        throw std::invalid_argument("does not support element type " + std::to_string(type));
     }
 }
 
@@ -185,23 +190,4 @@ std::vector<std::string> split(const std::string& s, char delim) {
         result.push_back(item);
     }
     return result;
-}
-
-std::vector<float> string_to_vec(const std::string& mean_scale) {
-    std::vector<float> res;
-    const auto string_values = split(mean_scale, ' ');
-    try {
-        for (auto& v : string_values) {
-            res.push_back(std::stof(v));
-        }
-    }
-    catch (const std::invalid_argument&) {
-        throw std::invalid_argument("Couldn't parse mean or scale argument");
-    }
-
-    if (res.size() != 3) {
-        throw std::invalid_argument("Mean or scale argument must have 3 values, given: " + mean_scale);
-    }
-
-    return res;
 }

@@ -59,14 +59,46 @@ DataPrecision get_data_precision(ONNXTensorElementDataType type);
 
 std::string get_precision_str(DataPrecision p);
 
-std::vector<float> string_to_vec(const std::string& mean_scale);
+std::vector<std::string> split(const std::string& s, char delim);
 
+template<class T>
+std::vector<T> string_to_vec(const std::string& str, const char delim) {
+    std::vector<T> res;
+    const auto string_values = split(str, delim);
+    try {
+        for (auto& v : string_values) {
+            if constexpr(std::is_same<float, T>::value) {
+                res.push_back(std::stof(v));
+            }
+            else if constexpr(std::is_same<double, T>::value) {
+                res.push_back(std::stod(v));
+            }
+            else if constexpr(std::is_same<int, T>::value) {
+                res.push_back(std::stoi(v));
+            }
+            else if constexpr(std::is_same<long, T>::value) {
+                res.push_back(std::stol(v));
+            }
+            else if constexpr(std::is_same<std::string, T>::value) {
+                res.push_back(v);
+            }
+            else {
+                static_assert(!sizeof(T), "No match template argument for this function");
+            }
+        }
+    }
+    catch (const std::invalid_argument&) {
+        throw std::invalid_argument("Can't parse mean or scale argument");
+    }
 
-template<class OutStream> 
+    return res;
+}
+
+template<class OutStream>
 void print_dims(std::vector<int64_t> dims, OutStream s) {
     s << "[";
     for (size_t j = 0; j < dims.size() - 1; ++j) {
-        s << dims[j] << ","; 
+        s << dims[j] << ",";
     }
     s << dims.back() <<  "]";
 }
