@@ -5,11 +5,13 @@ from xml.dom import minidom
 
 
 class TestResultParser:
-    def get_tests_list(self, config):
+    @staticmethod
+    def get_tests_list(config):
         CONFIG_ROOT_TAG = 'Test'
         return minidom.parse(config).getElementsByTagName(CONFIG_ROOT_TAG)
 
-    def parse_model(self, curr_test):
+    @staticmethod
+    def parse_model(curr_test):
         CONFIG_MODEL_TAG = 'Model'
         CONFIG_MODEL_TASK_TAG = 'Task'
         CONFIG_MODEL_NAME_TAG = 'Name'
@@ -29,7 +31,8 @@ class TestResultParser:
             weights_path=model_tag.getElementsByTagName(CONFIG_MODEL_WEIGHTS_PATH_TAG)[0].firstChild.data,
         )
 
-    def parse_dataset(self, curr_test):
+    @staticmethod
+    def parse_dataset(curr_test):
         CONFIG_DATASET_TAG = 'Dataset'
         CONFIG_DATASET_NAME_TAG = 'Name'
         CONFIG_DATASET_PATH_TAG = 'Path'
@@ -41,7 +44,8 @@ class TestResultParser:
             path=dataset_tag.getElementsByTagName(CONFIG_DATASET_PATH_TAG)[0].firstChild.data,
         )
 
-    def parse_independent_parameters(self, curr_test):
+    @staticmethod
+    def parse_independent_parameters(curr_test):
         CONFIG_FRAMEWORK_INDEPENDENT_TAG = 'FrameworkIndependent'
         CONFIG_FRAMEWORK_INDEPENDENT_INFERENCE_FRAMEWORK_TAG = 'InferenceFramework'
         CONFIG_FRAMEWORK_INDEPENDENT_BATCH_SIZE_TAG = 'BatchSize'
@@ -64,7 +68,8 @@ class TestResultParser:
                 CONFIG_FRAMEWORK_INDEPENDENT_TEST_TIME_LIMIT_TAG)[0].firstChild.data,
         )
 
-    def parse_dependent_parameters(self, curr_test, framework):
+    @staticmethod
+    def parse_dependent_parameters(curr_test, framework):
         dep_parser = DependentParametersParser.get_parser(framework)
         return dep_parser.parse_parameters(curr_test)
 
