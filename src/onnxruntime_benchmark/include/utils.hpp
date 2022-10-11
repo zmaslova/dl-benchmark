@@ -55,6 +55,8 @@ struct ONNXTensorDescr {
    std::vector<int64_t> shape;
    DataPrecision precision;
    ONNXTensorElementDataType elem_type;
+   const std::vector<float> mean;
+   const std::vector<float> scale;
 };
 
 
@@ -67,6 +69,8 @@ std::string get_precision_str(DataPrecision p);
 Ort::Value get_image_tensor(const std::vector<std::string>& files, const ONNXTensorDescr& tensor, int batch_size);
 
 Ort::Value get_binary_tensor(const std::vector<std::string>& files, const ONNXTensorDescr& tensor, int batch_size);
+
+std::vector<float> string_to_vec(const std::string& mean_scale);
 
 template <typename T>
 const T get_mat_value(const cv::Mat& mat, size_t h, size_t w, size_t c) {

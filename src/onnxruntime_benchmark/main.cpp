@@ -24,6 +24,16 @@ DEFINE_string(shape, "", shape_msg);
 constexpr char layout_msg[] = "layout for network input";
 DEFINE_string(layout, "", layout_msg);
 
+constexpr char input_mean_msg[] = "Mean values per channel for input image.\n"
+    "                                                     Applicable only for image models with 1 input.\n"
+    "                                                     Example: -mean 123.675 116.28 103.53";
+DEFINE_string(mean, "", input_mean_msg);
+
+constexpr char input_scale_msg[] = "Scale values per channel for input image.\n"
+    "                                                     Applicable only for image models with 1 input.\n"
+    "                                                     Example: -scale 58.395 57.12 57.375";
+DEFINE_string(scale, "", input_scale_msg);
+
 constexpr char threads_num_msg[] = "number of threads.";
 DEFINE_uint32(nthreads, 0, threads_num_msg);
 
@@ -44,13 +54,15 @@ void parse(int argc, char *argv[]) {
     if (FLAGS_h || 1 == argc) {
         std::cout << "onnxruntime_benchmark"
                   << "\nOptions:"
-                  << "\n\t[-h]                                           " << help_msg
+                  << "\n\t[-h]                                         " << help_msg
                   << "\n\t[-help]                                      print help on all arguments"
                   << "\n\t -m <MODEL FILE>                             " << model_msg
                   << "\n\t -i <INPUT>                                  " << input_msg
                   << "\n\t[-b <NUMBER>]                                " << batch_size_msg
                   << "\n\t[-shape <[N,C,H,W]>]                         " << shape_msg
                   << "\n\t[-layout <[NCHW]>]                           " << layout_msg
+                  << "\n\t[-mean <R G B>]                              " << input_mean_msg
+                  << "\n\t[-scale <R G B>]                             " << input_scale_msg
                   << "\n\t[-nthreads <NUMBER>]                         " << threads_num_msg
                   << "\n\t[-niter <NUMBER>]                            " << iterations_num_msg
                   << "\n\t[-t <NUMBER>]                                " << time_msg
@@ -76,7 +88,7 @@ int main(int argc, char* argv[]) {
     auto img = cv::imread(FLAGS_i);
     //cv::imshow("test", img);
     //cv::waitKey(0);
-    ONNXModel model(FLAGS_m, FLAGS_nthreads, FLAGS_b);
+    ONNXModel model(FLAGS_m, FLAGS_b, FLAGS_layout, FLAGS_mean, FLAGS_scale, FLAGS_nthreads);
     model.prepare_input_tensors({FLAGS_i});
     model.infer();
     return 0;
