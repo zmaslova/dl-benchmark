@@ -37,6 +37,9 @@ DEFINE_string(scale, "", input_scale_msg);
 constexpr char threads_num_msg[] = "number of threads.";
 DEFINE_uint32(nthreads, 0, threads_num_msg);
 
+constexpr char inputs_num_msg[] = "number of input tensors to inference. If not provided, default value is set";
+DEFINE_uint32(ninputs, 0, iterations_num_msg);
+
 constexpr char iterations_num_msg[] = "number of iterations. If not provided, default time limit is set";
 DEFINE_uint32(niter, 0, iterations_num_msg);
 

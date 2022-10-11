@@ -12,15 +12,24 @@ ONNXModel::ONNXModel(const std::string& model_file, const std::string& layout_st
     const std::string& mean_string, const std::string& scale_string, int batch_size, int num_threads)
     : batch_size(batch_size), num_threads(num_threads), mean(3, 0), scale(3, 1), dynamic_input(false) {
 
-    //input_shapes_map = parse_shape_or_layout_string(shape_string);
     input_layouts_map = parse_shape_or_layout_string(layout_string);
+    for (const auto& [input_name, shape] : parse_shape_or_layout_string(shape_string)) {
+        input_shapes_map.emplace(input_name, string_to_vec<long>(shape, ','));
+    }
 
     if (!mean_string.empty()) {
-        mean = string_to_vec(mean_string);
+        mean = string_to_vec<float>(mean_string, ' ');
+        if (mean.size() != 3) {
+            throw std::logic_error("Meast must have 3 values, one value per channel, bug given: " + mean_string);
+        }
     }
     if (!scale_string.empty()) {
-        scale = string_to_vec(scale_string);
+        scale = string_to_vec<float>(scale_string, ' ');
+        if (scale.size() != 3) {
+            throw std::logic_error("Meast must have 3 values, one value per channel, bug given: " + scale_string);
+        }
     }
+
     read_model(model_file);
     get_input_output_info();
 }
