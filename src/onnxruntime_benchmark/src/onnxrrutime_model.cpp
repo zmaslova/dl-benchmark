@@ -8,10 +8,13 @@
 #include <string>
 #include <vector>
 
-ONNXModel::ONNXModel(const std::string& model_file, int batch_size,const std::string& layout_string,
-    const std::string& mean_string, const std::string& scale_string, int num_threads)
-    : batch_size(batch_size), num_threads(num_threads), layout(layout_string), mean(3, 0), scale(3, 1) {
-    
+ONNXModel::ONNXModel(const std::string& model_file, const std::string& layout_string, const std::string& shape_string,
+    const std::string& mean_string, const std::string& scale_string, int batch_size, int num_threads)
+    : batch_size(batch_size), num_threads(num_threads), mean(3, 0), scale(3, 1), dynamic_input(false) {
+
+    //input_shapes_map = parse_shape_or_layout_string(shape_string);
+    input_layouts_map = parse_shape_or_layout_string(layout_string);
+
     if (!mean_string.empty()) {
         mean = string_to_vec(mean_string);
     }
@@ -27,10 +30,13 @@ void ONNXModel::read_model(const std::string model_path) {
     Ort::SessionOptions session_options;
     // Profile enabling?
     session_options.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_ALL);
-    // if (device_type == DLBenchDevice::CPU) {
-    session_options.SetExecutionMode(ExecutionMode::ORT_SEQUENTIAL);
+    // if (device_type == DLBenchDevice::CPU) { // log device and nthreads
+    session_options.SetExecutionMode(ExecutionMode::ORT_SEQUENTIAL); // Parallel
+
     if (num_threads > 0) {
         session_options.SetIntraOpNumThreads(num_threads);
+        logger::info << "Number of threads: " <<  num_threads << logger::endl;
+
     }
     session =  std::make_shared<Ort::Session>(*env, model_path.c_str(), session_options);
 }
@@ -59,8 +65,25 @@ void ONNXModel::get_input_output_info() {
         logger::info << logger::endl;
     }
 
+    // check for dynamic input
+    for (auto& shape : input_shapes) {
+        if (std::find(shape.begin(), shape.end(), -1) != shape.end()) {
+            dynamic_input = true;
+        }
+    }
+
+    if (dynamic_input) {
+        logger::info << "Model has dynamic input dimensions" << logger::endl;
+    }
+
     if (batch_size == 0) {
         batch_size = input_shapes[0][0]; // TODO: extend to support various layouts (with or without batch)
+    }
+    else if (dynamic_input) {
+        input_shapes[0][0] = batch_size;
+        input_shapes[0][2] = 224;
+        input_shapes[0][3] = 224;
+        logger::info << "Set batch to " << std::to_string(batch_size) << logger::endl;
     }
 
     // Get outputs from model
@@ -84,27 +107,32 @@ void ONNXModel::get_input_output_info() {
     //input_tensors.emplace_back(get_tensor_from_image())
 }
 
-void ONNXModel::prepare_input_tensors(const std::vector<std::string>& input_files) {
-    input_tensors.emplace_back(get_image_tensor(input_files, {input_names[0], input_shapes[0], input_data_precisions[0], input_data_types[0], mean, scale}, batch_size));
+void ONNXModel::prepare_input_tensors(const std::map<std::string, std::vector<std::string>>& input_files) {
+    input_tensors.emplace_back(get_image_tensor(input_files.begin()->second, {input_names[0], input_shapes[0], "", input_data_precisions[0], input_data_types[0], mean, scale}, batch_size));
+}
+
+void check_output(const std::vector<Ort::Value>& output_tensors, int batch_size) {
+    for (size_t i = 0; i < output_tensors.size(); ++i) {
+        logger::debug << "Output tensor #" << i << logger::endl;
+        const float* floatarr = output_tensors[i].GetTensorData<float>();
+        for (int b = 0; b < batch_size; ++b) {
+            logger::debug << "Batch #" << b << logger::endl;
+            std::vector<float> res(floatarr + b*1000, floatarr +  b*1000 + 1000);
+            std::vector<int> idx(1000);
+            std::iota(idx.begin(), idx.end(), 0);
+            auto max = std::max_element(res.begin(), res.end());
+            std::partial_sort(idx.begin(), idx.begin() + 5, idx.end(), [&res](int l, int r){
+                return  res[l] > res[r];
+            });
+            for (size_t j = 0; j < 5; ++j) {
+                logger::debug << "id: " << idx[j] << " score " << res[idx[j]] << logger::endl;
+            }
+        }
+    }
 }
 
 void ONNXModel::infer() {
     logger::info << input_names[0] << logger::endl;
     auto output_tensors = session->Run(Ort::RunOptions{nullptr}, input_names.data(), input_tensors.data(), input_names.size(), output_names.data(), output_names.size());
-
-    float* floatarr = output_tensors.front().GetTensorMutableData<float>();
-    std::vector<float> res(floatarr, floatarr + 1000);
-    std::vector<int> idx(1000);
-    std::iota(idx.begin(), idx.end(), 0);
-    auto max = std::max_element(res.begin(), res.end());
-    std::partial_sort(idx.begin(), idx.begin() + 5, idx.end(), [&res](int l, int r){
-        return  res[l] > res[r];
-    });
-    for (size_t i = 0; i < 5; ++i) {
-        logger::info << "id: " << idx[i] << " score " << res[idx[i]] << logger::endl;
-    }
-    // // score the model, and print scores for first 5 classes
-    // for (int i = 0; i < 5; i++) {
-    //     std::cout << "Score for class [" << i << "] =  " << floatarr[i] << '\n';
-    // }
+    check_output(output_tensors, batch_size);
 }

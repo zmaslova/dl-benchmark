@@ -25,12 +25,12 @@ constexpr char layout_msg[] = "layout for network input";
 DEFINE_string(layout, "", layout_msg);
 
 constexpr char input_mean_msg[] = "Mean values per channel for input image.\n"
-    "                                                     Applicable only for image models with 1 input.\n"
+    "                                                     Applicable only for models with one image input.\n"
     "                                                     Example: -mean 123.675 116.28 103.53";
 DEFINE_string(mean, "", input_mean_msg);
 
 constexpr char input_scale_msg[] = "Scale values per channel for input image.\n"
-    "                                                     Applicable only for image models with 1 input.\n"
+    "                                                     Applicable only for models with one image input.\n"
     "                                                     Example: -scale 58.395 57.12 57.375";
 DEFINE_string(scale, "", input_scale_msg);
 
@@ -83,13 +83,12 @@ int main(int argc, char* argv[]) {
     logger::info << "Parsing input arguments" << logger::endl;
     logger::info << logger::boolalpha << false << logger::endl;
     parse(argc, argv);
+    std::vector<gflags::CommandLineFlagInfo> flags;
+    gflags::GetAllFlags(&flags);
     logger::info << FLAGS_m << logger::endl;
-    logger::info << FLAGS_i << logger::endl;
-    auto img = cv::imread(FLAGS_i);
-    //cv::imshow("test", img);
-    //cv::waitKey(0);
-    ONNXModel model(FLAGS_m, FLAGS_b, FLAGS_layout, FLAGS_mean, FLAGS_scale, FLAGS_nthreads);
-    model.prepare_input_tensors({FLAGS_i});
+    auto input_files = parse_input_files_arguments(gflags::GetArgvs());
+    ONNXModel model(FLAGS_m, FLAGS_layout, FLAGS_shape, FLAGS_mean, FLAGS_scale, FLAGS_b, FLAGS_nthreads);
+    model.prepare_input_tensors(input_files);
     model.infer();
     return 0;
 }

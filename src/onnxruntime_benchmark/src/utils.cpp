@@ -1,102 +1,162 @@
 #include "utils.hpp"
 #include <onnxruntime_cxx_api.h>
-#include <opencv2/core.hpp>
-#include <opencv2/imgcodecs.hpp>
-#include <opencv2/imgproc/imgproc.hpp>
-#include <opencv2/highgui.hpp>
+#include <algorithm>
 #include <exception>
+#include <filesystem>
 #include <map>
 #include <numeric>
+#include <sstream>
 #include <string>
+#include <set>
+#include <vector>
 
-cv::Mat centerSquareCrop(const cv::Mat& image) {
-    if (image.cols >= image.rows) {
-        return image(cv::Rect((image.cols - image.rows) / 2, 0, image.rows, image.rows));
+std::vector<std::string> get_files_from_dir(const std::string& path) {
+    // use set to get files in order
+    std::set<std::string> res;
+    for (const auto & entry : std::filesystem::directory_iterator(path)) {
+        res.insert(entry.path());
     }
-    return image(cv::Rect(0, (image.rows - image.cols) / 2, image.cols, image.cols));
+
+    return std::vector<std::string>{res.begin(), res.end()};
 }
 
-template<class T>
-Ort::Value create_tensor_from_image(const std::vector<std::string>& files, const ONNXTensorDescr& tensor_descr, size_t batch_size) {
-    auto allocator = Ort::AllocatorWithDefaultOptions();
-    if (files.size() < batch_size) {
-        logger::warn << "Number of input files less than batch size. Some files will be duplicated" << logger::endl;
+std::vector<std::string> check_read_files(const std::string& path) {
+    if (std::filesystem::is_regular_file(path)) {
+        return {path};
     }
-    size_t tensor_size = std::accumulate(tensor_descr.shape.begin(), tensor_descr.shape.end(), 1, std::multiplies<int64_t>());
-    auto tensor = Ort::Value::CreateTensor(allocator, tensor_descr.shape.data(), tensor_descr.shape.size(), tensor_descr.elem_type);
-    auto tensor_data = tensor.GetTensorMutableData<T>();
+    else if (std::filesystem::is_directory(path)) {
+        return get_files_from_dir(path);
+    }
+    throw std::invalid_argument("Input path " + path + " neither an existing file nor a directory");
 
-    size_t channels = tensor_descr.shape[1];
-    size_t width = tensor_descr.shape[2];
-    size_t height = tensor_descr.shape[3];
-    cv::Mat img;
-    for (size_t b = 0; b < batch_size; ++b) {
-        img = cv::imread(files[b % files.size()]);
-        cv::Mat tmp = centerSquareCrop(img);
-        cv::resize(tmp, tmp, cv::Size(width, height));
-        cv::cvtColor(tmp, tmp,
-                 cv::ColorConversionCodes::COLOR_BGR2RGB);
-        cv::imshow("Test", tmp);
-        cv::waitKey(0);
-        for (size_t w = 0; w < width; ++w) {
-            for (size_t h = 0; h < height; ++h) {
-                for (size_t ch = 0; ch < channels; ++ch) {
-                    size_t offset = b * channels * width * height + (ch * width * height + h * width + w);
-                    tensor_data[offset] = (get_mat_value<T>(tmp, h, w, ch) - static_cast<T>(tensor_descr.mean[ch]))
-                    / static_cast<T>(tensor_descr.scale[ch]);;
+}
+
+std::pair<std::string, std::vector<std::string>> parse_input_files_per_input(const std::string& file_paths_string) {
+    auto search_string = file_paths_string;
+    std::string input_name = "";
+    std::vector<std::string> file_paths;
+
+    // parse strings like <input1>:file1,file2,file3 and get name from them
+    size_t semicolon_pos = search_string.find_first_of(":");
+    size_t quote_pos = search_string.find_first_of("\"");
+    if (semicolon_pos != std::string::npos && quote_pos != std::string::npos && semicolon_pos > quote_pos) {
+        // if : is found after opening " symbol - this means that " belongs to pathname
+        semicolon_pos = std::string::npos;
+    }
+    if (search_string.length() > 2 && semicolon_pos == 1 && search_string[2] == '\\') {
+        // Special case like C:\ denotes drive name, not an input name
+        semicolon_pos = std::string::npos;
+    }
+
+    if (semicolon_pos != std::string::npos) {
+        input_name = search_string.substr(0, semicolon_pos);
+        search_string = search_string.substr(semicolon_pos + 1);
+    }
+
+    // parse file1,file2,file3 and get vector of paths
+    size_t coma_pos = 0;
+    do {
+        coma_pos = search_string.find_first_of(',');
+        file_paths.push_back(search_string.substr(0, coma_pos));
+        if (coma_pos == std::string::npos) {
+            search_string = "";
+            break;
+        }
+        search_string = search_string.substr(coma_pos + 1);
+    } while (coma_pos != std::string::npos);
+
+    if (!search_string.empty())
+        throw std::logic_error("Can't parse file paths for input " + input_name +
+                               " in input parameter string: " + file_paths_string);
+
+    return {input_name, file_paths};
+}
+
+std::map<std::string, std::vector<std::string>> parse_input_files_arguments(const std::vector<std::string>& args, size_t max_files) {
+    std::map<std::string, std::vector<std::string>> mapped_files = {};
+    auto args_it = begin(args);
+    const auto is_image_arg = [](const std::string& s) {
+        return s == "-i";
+    };
+    const auto is_arg = [](const std::string& s) {
+        return s.front() == '-';
+    };
+    while (args_it != args.end()) {
+        const auto files_start = std::find_if(args_it, end(args), is_image_arg);
+        if (files_start == end(args)) {
+            break;
+        }
+        const auto files_begin = std::next(files_start);
+        const auto files_end = std::find_if(files_begin, end(args), is_arg);
+        for (auto f = files_begin; f != files_end; ++f) {
+            const auto& [input_name, files] = parse_input_files_per_input(*f);
+            if (mapped_files.count(input_name) == 0) {
+                mapped_files[input_name] = {};
+            }
+
+            for (const auto& file : files) {
+                if (file == "image_info" || file == "random") {
+                    mapped_files[input_name].push_back(file);
+                } else {
+                    auto checked_files = check_read_files(file);
+                    std::copy(std::make_move_iterator(checked_files.begin()), std::make_move_iterator(checked_files.end()),
+                        std::back_inserter(mapped_files[input_name]));
                 }
             }
         }
+        args_it = files_end;
     }
-    auto ch = img.channels();
-    std::vector<uchar> imgdata(img.data, img.data + img.total());
-    T* t = tensor.GetTensorMutableData<T>();
-    std::vector<T> tmp(t, t + tensor_size);
-    return tensor;
+
+    if (mapped_files.size() > 0) {
+        logger::info << "Checked input files successfully. Next files were added:" << logger::endl;
+    }
+    for (auto& [input_name, files] : mapped_files) {
+        if (input_name != "") {
+            logger::info << "For input " << input_name << " " << files.size() << " files:" << logger::endl;
+        }
+        if (files.size() > max_files) {
+            logger::warn << " The number of files is limited to " << max_files << "" << logger::endl;
+            files.resize(max_files);
+        }
+        for (const auto& f : files) {
+            logger::info << "\t" << f << logger::endl;
+        }
+    }
+
+    return mapped_files;
 }
 
-template<class T>
-Ort::Value create_tensor_from_binary(const std::vector<std::string>& files, const ONNXTensorDescr& tensor_descr, int batch_size) {
-    auto allocator = Ort::AllocatorWithDefaultOptions();
-    return Ort::Value::CreateTensor(allocator, tensor_descr.shape.data(), tensor_descr.shape.size(), tensor_descr.elem_type);
-}
-
-Ort::Value get_image_tensor(const std::vector<std::string>& files, const ONNXTensorDescr& tensor_descr, int batch_size) {
-    auto precision = tensor_descr.precision;
-    if (precision == DataPrecision::FP32) {
-        return create_tensor_from_image<float>(files, tensor_descr, batch_size);
-    }
-    else if (precision == DataPrecision::S32) {
-        return create_tensor_from_image<int32_t>(files, tensor_descr, batch_size);
-    }
-    else if (precision == DataPrecision::S64) {
-        return create_tensor_from_image<int64_t>(files, tensor_descr, batch_size);
-    }
-    else if (precision == DataPrecision::BOOL) {
-        return create_tensor_from_image<bool>(files, tensor_descr, batch_size);
-    }
-    else {
-        throw std::runtime_error("Unsuported tensor precision: " + get_precision_str(precision));
-    }
-}
-
-Ort::Value get_binary_tensor(const std::vector<std::string>& files, const ONNXTensorDescr& tensor_descr, int batch_size) {
-    auto precision = tensor_descr.precision;
-    if (precision == DataPrecision::FP32) {
-        return create_tensor_from_binary<float>(files, tensor_descr, batch_size);
-    }
-    else if (precision == DataPrecision::S32) {
-        return create_tensor_from_binary<int32_t>(files, tensor_descr, batch_size);
-    }
-    else if (precision == DataPrecision::S64) {
-        return create_tensor_from_binary<int64_t>(files, tensor_descr, batch_size);
-    }
-    else if (precision == DataPrecision::BOOL) {
-        return create_tensor_from_binary<bool>(files, tensor_descr, batch_size);
-    }
-    else {
-        throw std::runtime_error("Unsuported tensor precision: " + get_precision_str(precision));
-    }
+std::map<std::string, std::string> parse_shape_or_layout_string(const std::string& parameter_string) {
+    // Parse parameter string like "input0[value0],input1[value1]" or "[value]" (applied to all
+    // inputs)
+    std::map<std::string, std::string> return_value;
+    // std::string search_string = parameter_string;
+    // auto start_pos = search_string.find_first_of('[');
+    // auto input_name = search_string.substr(0, start_pos);
+    // while (start_pos != std::string::npos) {
+    //     auto end_pos = search_string.find_first_of(']');
+    //     if (end_pos == std::string::npos)
+    //         break;
+    //     if (start_pos)
+    //         input_name = search_string.substr(0, start_pos);
+    //     auto input_value = search_string.substr(start_pos + 1, end_pos - start_pos - 1);
+    //     if (!input_name.empty()) {
+    //         return_value[parameter_name_to_tensor_name(input_name, input_info)].push_back(input_value);
+    //     } else {
+    //         for (auto& item : input_info) {
+    //             return_value[item.get_any_name()].push_back(input_value);
+    //         }
+    //     }
+    //     search_string = search_string.substr(end_pos + 1);
+    //     if (search_string.empty() || (search_string.front() != ',' && search_string.front() != '['))
+    //         break;
+    //     if (search_string.front() == ',')
+    //         search_string = search_string.substr(1);
+    //     start_pos = search_string.find_first_of('[');
+    // }
+    // if (!search_string.empty())
+    //     throw std::logic_error("Can't parse input parameter string: " + parameter_string);
+    return return_value;
 }
 
 DataPrecision get_data_precision(ONNXTensorElementDataType type) {
