@@ -107,15 +107,15 @@ std::map<std::string, std::vector<std::string>> parse_input_files_arguments(cons
         args_it = files_end;
     }
 
-    if (mapped_files.size() > 0) {
-        logger::info << "Checked input files successfully. Next files were added:" << logger::endl;
+    if (mapped_files.size() == 0) {
+        logger::info << "No files were added. Random data will be used." << logger::endl;
     }
     for (auto& [input_name, files] : mapped_files) {
         if (input_name != "") {
-            logger::info << "For input " << input_name << " " << files.size() << " files:" << logger::endl;
+            logger::info << "For input " << input_name << " " << files.size() << " files were added:" << logger::endl;
         }
         if (files.size() > max_files) {
-            logger::warn << " The number of files is limited to " << max_files << "" << logger::endl;
+            logger::warn << " Too much files to process. The number of files is limited to " << max_files << "" << logger::endl;
             files.resize(max_files);
         }
         for (const auto& f : files) {
@@ -148,7 +148,7 @@ std::map<std::string, std::string> parse_shape_or_layout_string(const std::strin
         } else {
             return_value[""] = input_value;
         }
-    
+
         search_string = search_string.substr(end_pos + 1);
         if (search_string.empty() || (search_string.front() != ',' && search_string.front() != '['))
             break;

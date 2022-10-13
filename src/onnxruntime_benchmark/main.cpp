@@ -1,4 +1,6 @@
 #include "onnxrrutime_model.hpp"
+#include "inputs_info.hpp"
+#include "tensors_handler.hpp"
 #include "utils.hpp"
 #include <gflags/gflags.h>
 #include <opencv2/core.hpp>
@@ -20,7 +22,7 @@ DEFINE_uint32(b, 0, batch_size_msg);
 
 constexpr char shape_msg[] = "shape for network input";
 DEFINE_string(shape, "", shape_msg);
-
+//
 constexpr char layout_msg[] = "layout for network input";
 DEFINE_string(layout, "", layout_msg);
 
@@ -38,7 +40,7 @@ constexpr char threads_num_msg[] = "number of threads.";
 DEFINE_uint32(nthreads, 0, threads_num_msg);
 
 constexpr char inputs_num_msg[] = "number of input tensors to inference. If not provided, default value is set";
-DEFINE_uint32(ninputs, 0, iterations_num_msg);
+DEFINE_uint32(ninputs, 0, inputs_num_msg);
 
 constexpr char iterations_num_msg[] = "number of iterations. If not provided, default time limit is set";
 DEFINE_uint32(niter, 0, iterations_num_msg);
@@ -84,14 +86,34 @@ void parse(int argc, char *argv[]) {
 int main(int argc, char* argv[]) {
     std::set_terminate(catcher);
     logger::info << "Parsing input arguments" << logger::endl;
-    logger::info << logger::boolalpha << false << logger::endl;
     parse(argc, argv);
+    logger::info << "Checking input files" << logger::endl;
     std::vector<gflags::CommandLineFlagInfo> flags;
+
     gflags::GetAllFlags(&flags);
-    logger::info << FLAGS_m << logger::endl;
     auto input_files = parse_input_files_arguments(gflags::GetArgvs());
-    ONNXModel model(FLAGS_m, FLAGS_layout, FLAGS_shape, FLAGS_mean, FLAGS_scale, FLAGS_b, FLAGS_nthreads);
-    model.prepare_input_tensors(input_files);
-    model.infer();
+
+    ONNXModel model(FLAGS_nthreads);
+    model.read_model(FLAGS_m);
+
+    auto inputs_info = get_inputs_info(input_files, model.get_input_tensors_info(), FLAGS_layout,
+        FLAGS_shape, FLAGS_mean, FLAGS_scale);
+
+    size_t batch_size = get_batch_size(inputs_info);
+    if (batch_size == -1 && FLAGS_b > 0) {
+        batch_size = FLAGS_b;
+    }
+    else if (batch_size == -1) {
+        throw std::logic_error("Model has dynamic batch size, but -b option wasn't provided.");
+    }
+    else if (FLAGS_b > 0) {
+        throw std::logic_error("Can't set batch for model with static batch dimension.");
+    }
+    logger::info << "Set batch to " << batch_size << logger::endl;
+
+    auto tensors = get_input_tensors(inputs_info, batch_size);
+    for (auto& t : tensors) {
+        model.run(t);
+    }
     return 0;
 }
