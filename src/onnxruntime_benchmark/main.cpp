@@ -39,8 +39,8 @@ DEFINE_string(scale, "", input_scale_msg);
 constexpr char threads_num_msg[] = "number of threads.";
 DEFINE_uint32(nthreads, 0, threads_num_msg);
 
-constexpr char inputs_num_msg[] = "number of input tensors to inference. If not provided, default value is set";
-DEFINE_uint32(ninputs, 0, inputs_num_msg);
+constexpr char tensors_num_msg[] = "number of input tensors to inference. If not provided, default value is set";
+DEFINE_uint32(ntensors, 0, tensors_num_msg);
 
 constexpr char iterations_num_msg[] = "number of iterations. If not provided, default time limit is set";
 DEFINE_uint32(niter, 0, iterations_num_msg);
@@ -69,6 +69,7 @@ void parse(int argc, char *argv[]) {
                   << "\n\t[-mean <R G B>]                              " << input_mean_msg
                   << "\n\t[-scale <R G B>]                             " << input_scale_msg
                   << "\n\t[-nthreads <NUMBER>]                         " << threads_num_msg
+                  << "\n\t[-ntensors <NUMBER>]                          " << tensors_num_msg
                   << "\n\t[-niter <NUMBER>]                            " << iterations_num_msg
                   << "\n\t[-t <NUMBER>]                                " << time_msg
                   << "\n\t[-save_report]                               " << save_report_msg
@@ -111,7 +112,11 @@ int main(int argc, char* argv[]) {
     }
     logger::info << "Set batch to " << batch_size << logger::endl;
 
-    auto tensors = get_input_tensors(inputs_info, batch_size);
+    int tensors_num = 1;
+    if (FLAGS_ntensors > 0) {
+        tensors_num = FLAGS_ntensors;
+    }
+    auto tensors = get_input_tensors(inputs_info, batch_size, tensors_num);
     for (auto& t : tensors) {
         model.run(t);
     }
