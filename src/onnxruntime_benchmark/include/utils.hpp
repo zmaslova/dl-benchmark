@@ -3,7 +3,9 @@
 #include <onnxruntime_cxx_api.h>
 #include <cstdint>
 #include <exception>
+#include <iterator>
 #include <map>
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -94,13 +96,14 @@ std::vector<T> string_to_vec(const std::string& str, const char delim) {
     return res;
 }
 
-template<class OutStream>
-void print_dims(std::vector<int64_t> dims, OutStream s) {
+template<typename T>
+std::string shape_string(std::vector<T> shape) {
+    std::ostringstream s;
     s << "[";
-    for (size_t j = 0; j < dims.size() - 1; ++j) {
-        s << dims[j] << ",";
-    }
-    s << dims.back() <<  "]";
+    std::copy(shape.begin(), shape.end() - 1,
+        std::ostream_iterator<T>(s, ","));
+    s << shape.back() <<  "]";
+    return s.str();
 }
 
 static inline void catcher() noexcept {
