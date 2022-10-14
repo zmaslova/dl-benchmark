@@ -14,15 +14,14 @@ static constexpr BoolAlpha boolalpha;
 
 class LogStream {
     std::string prefix;
-    std::ostream* lstream;
+    std::ostream *lstream;
     bool end_line;
 
 public:
-    LogStream(const std::string &prefix, std::ostream& lstream)
-            : prefix(prefix), end_line(true), lstream(&lstream) {}
+    LogStream(const std::string &prefix, std::ostream &lstream) : prefix(prefix), end_line(true), lstream(&lstream) {}
 
-    template<class T>
-    LogStream &operator<<(const T& arg) {
+    template <class T>
+    LogStream &operator<<(const T &arg) {
         if (end_line) {
             (*lstream) << "[ " << prefix << " ] ";
             end_line = false;
@@ -31,17 +30,16 @@ public:
         return *this;
     }
 
-    LogStream& operator<< (const EndLine&) {
+    LogStream &operator<<(const EndLine &) {
         end_line = true;
         (*lstream) << std::endl;
         return *this;
     }
 
-    LogStream& operator<< (const BoolAlpha&) {
+    LogStream &operator<<(const BoolAlpha &) {
         (*lstream) << std::boolalpha;
         return *this;
     }
-
 };
 
 static LogStream info("INFO", std::cout);
@@ -49,4 +47,4 @@ static LogStream debug("DEBUG", std::cout);
 static LogStream warn("WARNING", std::cout);
 static LogStream err("ERROR", std::cerr);
 
-}  // namespace logger
+} // namespace logger

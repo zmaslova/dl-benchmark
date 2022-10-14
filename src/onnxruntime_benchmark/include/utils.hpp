@@ -1,6 +1,8 @@
 #pragma once
 #include "logger.hpp"
+
 #include <onnxruntime_cxx_api.h>
+
 #include <cstdint>
 #include <exception>
 #include <iterator>
@@ -8,6 +10,9 @@
 #include <sstream>
 #include <string>
 #include <vector>
+
+struct InputDescr;
+using InputsInfo = std::map<std::string, InputDescr>;
 
 enum class DataPrecision : unsigned int {
     FP32 = 0,
@@ -24,93 +29,45 @@ enum class DataPrecision : unsigned int {
 };
 
 const std::map<ONNXTensorElementDataType, DataPrecision> onnx_dtype_to_precision_map = {
-    { ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT,     DataPrecision::FP32    },
-    { ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT16,   DataPrecision::FP16    },
-    { ONNX_TENSOR_ELEMENT_DATA_TYPE_UINT8,     DataPrecision::U8      },
-    { ONNX_TENSOR_ELEMENT_DATA_TYPE_INT8,      DataPrecision::S8      },
-    { ONNX_TENSOR_ELEMENT_DATA_TYPE_INT32,     DataPrecision::S32     },
-    { ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64,     DataPrecision::S64     },
-    { ONNX_TENSOR_ELEMENT_DATA_TYPE_BOOL,      DataPrecision::BOOL    },
-    { ONNX_TENSOR_ELEMENT_DATA_TYPE_UNDEFINED, DataPrecision::UNKNOWN }
-};
+    {ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT, DataPrecision::FP32},
+    {ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT16, DataPrecision::FP16},
+    {ONNX_TENSOR_ELEMENT_DATA_TYPE_UINT8, DataPrecision::U8},
+    {ONNX_TENSOR_ELEMENT_DATA_TYPE_INT8, DataPrecision::S8},
+    {ONNX_TENSOR_ELEMENT_DATA_TYPE_INT32, DataPrecision::S32},
+    {ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64, DataPrecision::S64},
+    {ONNX_TENSOR_ELEMENT_DATA_TYPE_BOOL, DataPrecision::BOOL},
+    {ONNX_TENSOR_ELEMENT_DATA_TYPE_UNDEFINED, DataPrecision::UNKNOWN}};
 
 static const std::map<std::string, DataPrecision> precision_to_str_map = {
-    { "FP32",   DataPrecision::FP32 },
-    { "FP16",   DataPrecision::FP16 },
-    { "FP11",   DataPrecision::FP11 },
-    { "U8",     DataPrecision::U8   },
-    { "S8",     DataPrecision::S8   },
-    { "S16",    DataPrecision::S16  },
-    { "S32",    DataPrecision::S32  },
-    { "S64",    DataPrecision::S64  },
-    { "INT8",   DataPrecision::S8   },
-    { "INT16",  DataPrecision::S16  },
-    { "INT32",  DataPrecision::S32  },
-    { "INT64",  DataPrecision::S64  },
-    { "BOOL",   DataPrecision::BOOL },
-    { "MIXED",  DataPrecision::MIXED },
+    {"FP32", DataPrecision::FP32},
+    {"FP16", DataPrecision::FP16},
+    {"FP11", DataPrecision::FP11},
+    {"U8", DataPrecision::U8},
+    {"S8", DataPrecision::S8},
+    {"S16", DataPrecision::S16},
+    {"S32", DataPrecision::S32},
+    {"S64", DataPrecision::S64},
+    {"INT8", DataPrecision::S8},
+    {"INT16", DataPrecision::S16},
+    {"INT32", DataPrecision::S32},
+    {"INT64", DataPrecision::S64},
+    {"BOOL", DataPrecision::BOOL},
+    {"MIXED", DataPrecision::MIXED},
 };
-
-std::map<std::string, std::vector<std::string>> parse_input_files_arguments(const std::vector<std::string>& args, size_t max_files = 20);
-
-std::map<std::string, std::string> parse_shape_or_layout_string(const std::string& parameter_string);
-
-std::vector<int64_t> parse_shape_string();
 
 DataPrecision get_data_precision(ONNXTensorElementDataType type);
 
 std::string get_precision_str(DataPrecision p);
 
-std::vector<std::string> split(const std::string& s, char delim);
+size_t get_batch_size(const InputsInfo &inputs_info);
 
-template<class T>
-std::vector<T> string_to_vec(const std::string& str, const char delim) {
-    std::vector<T> res;
-    const auto string_values = split(str, delim);
-    try {
-        for (auto& v : string_values) {
-            if constexpr(std::is_same<float, T>::value) {
-                res.push_back(std::stof(v));
-            }
-            else if constexpr(std::is_same<double, T>::value) {
-                res.push_back(std::stod(v));
-            }
-            else if constexpr(std::is_same<int, T>::value) {
-                res.push_back(std::stoi(v));
-            }
-            else if constexpr(std::is_same<long, T>::value) {
-                res.push_back(std::stol(v));
-            }
-            else if constexpr(std::is_same<std::string, T>::value) {
-                res.push_back(v);
-            }
-            else {
-                static_assert(!sizeof(T), "No match template argument for this function");
-            }
-        }
-    }
-    catch (const std::invalid_argument&) {
-        throw std::invalid_argument("Can't parse mean or scale argument");
-    }
-
-    return res;
-}
-
-template<typename T>
-std::string shape_string(std::vector<T> shape) {
-    std::ostringstream s;
-    s << "[";
-    std::copy(shape.begin(), shape.end() - 1,
-        std::ostream_iterator<T>(s, ","));
-    s << shape.back() <<  "]";
-    return s.str();
-}
+std::string guess_layout_from_shape(std::vector<int64_t> &shape);
 
 static inline void catcher() noexcept {
     if (std::current_exception()) {
         try {
             std::rethrow_exception(std::current_exception());
-        } catch (const std::exception& error) {
+        } catch (const std::exception &error) {
             logger::err << error.what() << logger::endl;
         } catch (...) {
             logger::err << "Non-exception object thrown" << logger::endl;

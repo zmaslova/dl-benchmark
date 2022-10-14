@@ -1,11 +1,13 @@
-#include "onnxrrutime_model.hpp"
-#include "inputs_info.hpp"
-#include "tensors_handler.hpp"
+#include "args_handler.hpp"
+#include "inputs_preparation.hpp"
+#include "onnxruntime_model.hpp"
 #include "utils.hpp"
+
 #include <gflags/gflags.h>
-#include <opencv2/core.hpp>
-#include <opencv2/highgui.hpp>
+
 #include <iostream>
+#include <vector>
+#include <string>
 
 namespace {
 constexpr char help_msg[] = "show the help message and exit";
@@ -14,7 +16,8 @@ DEFINE_bool(h, false, help_msg);
 constexpr char model_msg[] = "path to an .onnx file with a trained model";
 DEFINE_string(m, "", model_msg);
 
-constexpr char input_msg[] = "path to an input to process. The input must be an image and/or binaries, a folder of images and/or binaries";
+constexpr char input_msg[] =
+    "path to an input to process. The input must be an image and/or binaries, a folder of images and/or binaries";
 DEFINE_string(i, "", input_msg);
 
 constexpr char batch_size_msg[] = "batch size value. If not provided, batch size value is determined from the model";
@@ -26,12 +29,14 @@ DEFINE_string(shape, "", shape_msg);
 constexpr char layout_msg[] = "layout for network input";
 DEFINE_string(layout, "", layout_msg);
 
-constexpr char input_mean_msg[] = "Mean values per channel for input image.\n"
+constexpr char input_mean_msg[] =
+    "Mean values per channel for input image.\n"
     "                                                     Applicable only for models with one image input.\n"
     "                                                     Example: -mean 123.675 116.28 103.53";
 DEFINE_string(mean, "", input_mean_msg);
 
-constexpr char input_scale_msg[] = "Scale values per channel for input image.\n"
+constexpr char input_scale_msg[] =
+    "Scale values per channel for input image.\n"
     "                                                     Applicable only for models with one image input.\n"
     "                                                     Example: -scale 58.395 57.12 57.375";
 DEFINE_string(scale, "", input_scale_msg);
@@ -73,18 +78,19 @@ void parse(int argc, char *argv[]) {
                   << "\n\t[-niter <NUMBER>]                            " << iterations_num_msg
                   << "\n\t[-t <NUMBER>]                                " << time_msg
                   << "\n\t[-save_report]                               " << save_report_msg
-                  << "\n\t[-report_folder <PATH>]                      " << report_folder_msg
-                  << "\n";
+                  << "\n\t[-report_folder <PATH>]                      " << report_folder_msg << "\n";
         exit(0);
-    } if (FLAGS_i.empty()) {
+    }
+    if (FLAGS_i.empty()) {
         throw std::invalid_argument{"-i <INPUT> can't be empty"};
-    } if (FLAGS_m.empty()) {
+    }
+    if (FLAGS_m.empty()) {
         throw std::invalid_argument{"-m <MODEL FILE> can't be empty"};
     }
 }
-}
+} // namespace
 
-int main(int argc, char* argv[]) {
+int main(int argc, char *argv[]) {
     std::set_terminate(catcher);
     logger::info << "Parsing input arguments" << logger::endl;
     parse(argc, argv);
@@ -97,8 +103,12 @@ int main(int argc, char* argv[]) {
     ONNXModel model(FLAGS_nthreads);
     model.read_model(FLAGS_m);
 
-    auto inputs_info = get_inputs_info(input_files, model.get_input_tensors_info(), FLAGS_layout,
-        FLAGS_shape, FLAGS_mean, FLAGS_scale);
+    auto inputs_info = get_inputs_info(input_files,
+                                       model.get_input_tensors_info(),
+                                       FLAGS_layout,
+                                       FLAGS_shape,
+                                       FLAGS_mean,
+                                       FLAGS_scale);
 
     size_t batch_size = get_batch_size(inputs_info);
     if (batch_size == -1 && FLAGS_b > 0) {
@@ -117,7 +127,7 @@ int main(int argc, char* argv[]) {
         tensors_num = FLAGS_ntensors;
     }
     auto tensors = get_input_tensors(inputs_info, batch_size, tensors_num);
-    for (auto& t : tensors) {
+    for (auto &t : tensors) {
         model.run(t);
     }
     return 0;
