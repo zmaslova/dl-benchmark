@@ -31,7 +31,7 @@ bool ONNXTensorDescr::is_dynamic_batch() const {
     return false;
 }
 
-void ONNXTensorDescr::set_batch(int64_t batch_size) {
+void ONNXTensorDescr::set_batch(int batch_size) {
     std::size_t batch_index = layout.find("N");
     if (batch_index != std::string::npos) {
         shape[batch_index] = batch_size;
@@ -123,7 +123,7 @@ void ONNXModel::fill_inputs_outputs_info() {
 
 std::vector<ONNXTensorDescr> ONNXModel::get_input_tensors_info() const {
     std::vector<ONNXTensorDescr> input_tensors_info;
-    for (int i = 0; i < io.input_names.size(); ++i) {
+    for (size_t i = 0; i < io.input_names.size(); ++i) {
         input_tensors_info.push_back({std::string(io.input_names[i]), io.input_shapes[i], "", io.input_data_types[i]});
     }
     return input_tensors_info;
@@ -138,7 +138,6 @@ void check_output(const std::vector<Ort::Value> &output_tensors, int batch_size)
             std::vector<float> res(floatarr + b * 1000, floatarr + b * 1000 + 1000);
             std::vector<int> idx(1000);
             std::iota(idx.begin(), idx.end(), 0);
-            auto max = std::max_element(res.begin(), res.end());
             std::partial_sort(idx.begin(), idx.begin() + 5, idx.end(), [&res](int l, int r) {
                 return res[l] > res[r];
             });

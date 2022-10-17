@@ -18,7 +18,7 @@ class LogStream {
     bool end_line;
 
 public:
-    LogStream(const std::string &prefix, std::ostream &lstream) : prefix(prefix), end_line(true), lstream(&lstream) {}
+    LogStream(const std::string &prefix, std::ostream &lstream) : prefix(prefix), lstream(&lstream), end_line(true) {}
 
     template <class T>
     LogStream &operator<<(const T &arg) {
