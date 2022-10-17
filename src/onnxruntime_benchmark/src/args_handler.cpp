@@ -75,9 +75,10 @@ std::pair<std::string, std::vector<std::string>> parse_input_files_per_input(con
         search_string = search_string.substr(coma_pos + 1);
     } while (coma_pos != std::string::npos);
 
-    if (!search_string.empty())
+    if (!search_string.empty()) {
         throw std::logic_error("Can't parse file paths for input " + input_name +
                                " in input parameter string: " + file_paths_string);
+    }
 
     return {input_name, file_paths};
 }
