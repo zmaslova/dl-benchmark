@@ -81,9 +81,6 @@ void parse(int argc, char *argv[]) {
                   << "\n\t[-report_folder <PATH>]                      " << report_folder_msg << "\n";
         exit(0);
     }
-    if (FLAGS_i.empty()) {
-        throw std::invalid_argument{"-i <INPUT> can't be empty"};
-    }
     if (FLAGS_m.empty()) {
         throw std::invalid_argument{"-m <MODEL FILE> can't be empty"};
     }
@@ -126,6 +123,7 @@ int main(int argc, char *argv[]) {
     if (FLAGS_ntensors > 0) {
         tensors_num = FLAGS_ntensors;
     }
+
     auto tensors = get_input_tensors(inputs_info, batch_size, tensors_num);
     for (auto &t : tensors) {
         model.run(t);

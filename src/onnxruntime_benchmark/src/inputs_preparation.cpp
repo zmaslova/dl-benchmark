@@ -10,10 +10,34 @@
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 
+#include <limits>
 #include <map>
 #include <numeric>
+#include <random>
 #include <string>
 #include <vector>
+
+template <typename T>
+using UniformDistribution = typename std::conditional<
+    std::is_floating_point<T>::value,
+    std::uniform_real_distribution<T>,
+    typename std::conditional<std::is_integral<T>::value, std::uniform_int_distribution<T>, void>::type>::type;
+
+cv::Mat centerSquareCrop(const cv::Mat &image) {
+    if (image.cols >= image.rows) {
+        return image(cv::Rect((image.cols - image.rows) / 2, 0, image.rows, image.rows));
+    }
+    return image(cv::Rect(0, (image.rows - image.cols) / 2, image.cols, image.cols));
+}
+
+cv::Mat read_image(const std::string& img_path, size_t height, size_t width) {
+    auto img = cv::imread(img_path);
+    cv::Mat resized_image = centerSquareCrop(img);
+    cv::resize(resized_image, resized_image, cv::Size(width, height));
+    cv::cvtColor(resized_image, resized_image,
+                cv::ColorConversionCodes::COLOR_BGR2RGB); // ?
+    return resized_image;
+}
 
 template <typename T>
 const T get_mat_value(const cv::Mat &mat, size_t h, size_t w, size_t c) {
@@ -30,23 +54,30 @@ const T get_mat_value(const cv::Mat &mat, size_t h, size_t w, size_t c) {
     throw std::runtime_error("cv::Mat type is not recognized");
 };
 
-cv::Mat centerSquareCrop(const cv::Mat &image) {
-    if (image.cols >= image.rows) {
-        return image(cv::Rect((image.cols - image.rows) / 2, 0, image.rows, image.rows));
-    }
-    return image(cv::Rect(0, (image.rows - image.cols) / 2, image.cols, image.cols));
-}
 
-template <class T>
-Ort::Value create_random_tensor(const InputDescr &input_descr) {
-    logger::info << "\t"
-                 << "random tensor" << logger::endl;
+template <class T, class T2>
+Ort::Value create_random_tensor(const InputDescr &input_descr,
+                                int batch_size,
+                                T rand_min = std::numeric_limits<uint8_t>::min(),
+                                T rand_max = std::numeric_limits<uint8_t>::max()) {
+    logger::info << "\trandom tensor" << logger::endl;
     auto tensor_descr = input_descr.tensor_descr;
+    tensor_descr.set_batch(batch_size); // move somewhere else
     auto allocator = Ort::AllocatorWithDefaultOptions();
-    return Ort::Value::CreateTensor(allocator,
-                                    tensor_descr.shape.data(),
-                                    tensor_descr.shape.size(),
-                                    tensor_descr.elem_type);
+    auto tensor = Ort::Value::CreateTensor(allocator,
+                                           tensor_descr.shape.data(),
+                                           tensor_descr.shape.size(),
+                                           tensor_descr.elem_type);
+    auto tensor_data = tensor.GetTensorMutableData<T>();
+    size_t tensor_size =
+        std::accumulate(tensor_descr.shape.begin(), tensor_descr.shape.end(), 1, std::multiplies<int64_t>());
+
+    std::mt19937 gen(0);
+    UniformDistribution<T2> distribution(rand_min, rand_max);
+    for (int64_t i = 0; i < tensor_size; ++i) {
+        tensor_data[i] = static_cast<T>(distribution(gen));
+    }
+    return tensor;
 }
 
 template <class T>
@@ -70,22 +101,18 @@ Ort::Value create_tensor_from_image(const InputDescr &input_descr, int batch_siz
     size_t channels = tensor_descr.shape[1];
     size_t width = tensor_descr.shape[2];
     size_t height = tensor_descr.shape[3];
-    cv::Mat img;
 
     for (size_t b = 0; b < batch_size; ++b) {
+        auto img_file = files[(start_index + b) % files.size()];
         logger::info << "\t\t" << files[(start_index + b) % files.size()] << logger::endl;
-        img = cv::imread(files[(start_index + b) % files.size()]);
-        cv::Mat tmp = centerSquareCrop(img);
-        cv::resize(tmp, tmp, cv::Size(width, height));
-        cv::cvtColor(tmp, tmp,
-                     cv::ColorConversionCodes::COLOR_BGR2RGB); // ?
+        cv::Mat img = read_image(img_file, height, width);
         // cv::imshow("Test", tmp);
         // cv::waitKey(0);
         for (size_t w = 0; w < width; ++w) {
             for (size_t h = 0; h < height; ++h) {
                 for (size_t ch = 0; ch < channels; ++ch) {
                     size_t offset = b * channels * width * height + (ch * width * height + h * width + w);
-                    tensor_data[offset] = (get_mat_value<T>(tmp, h, w, ch) - static_cast<T>(input_descr.mean[ch])) /
+                    tensor_data[offset] = (get_mat_value<T>(img, h, w, ch) - static_cast<T>(input_descr.mean[ch])) /
                                           static_cast<T>(input_descr.scale[ch]);
                     ;
                 }
@@ -119,9 +146,6 @@ Ort::Value get_image_tensor(const InputDescr &input_descr, int batch_size, int s
     else if (precision == DataPrecision::S64) {
         return create_tensor_from_image<int64_t>(input_descr, batch_size, start_index);
     }
-    else if (precision == DataPrecision::BOOL) {
-        return create_tensor_from_image<bool>(input_descr, batch_size, start_index);
-    }
 
     throw std::invalid_argument("Unsuported tensor precision: " + get_precision_str(precision));
 }
@@ -138,7 +162,7 @@ Ort::Value get_binary_tensor(const InputDescr &input_descr, int batch_size, int 
         return create_tensor_from_binary<int64_t>(input_descr, batch_size, start_index);
     }
     else if (precision == DataPrecision::BOOL) {
-        return create_tensor_from_binary<bool>(input_descr, batch_size, start_index);
+        return create_tensor_from_binary<uint8_t>(input_descr, batch_size, start_index);
     }
     throw std::invalid_argument("Unsuported tensor precision: " + get_precision_str(precision));
 }
@@ -146,16 +170,16 @@ Ort::Value get_binary_tensor(const InputDescr &input_descr, int batch_size, int 
 Ort::Value get_random_tensor(const InputDescr &input_descr, int batch_size) {
     auto precision = get_data_precision(input_descr.tensor_descr.elem_type);
     if (precision == DataPrecision::FP32) {
-        return create_random_tensor<float>(input_descr);
+        return create_random_tensor<float, float>(input_descr, batch_size);
     }
     else if (precision == DataPrecision::S32) {
-        return create_random_tensor<int32_t>(input_descr);
+        return create_random_tensor<int32_t, int32_t>(input_descr, batch_size);
     }
     else if (precision == DataPrecision::S64) {
-        return create_random_tensor<int64_t>(input_descr);
+        return create_random_tensor<int64_t, int64_t>(input_descr, batch_size);
     }
     else if (precision == DataPrecision::BOOL) {
-        return create_random_tensor<bool>(input_descr);
+        return create_random_tensor<uint8_t, uint32_t>(input_descr, batch_size, 0 , 1);
     }
     throw std::invalid_argument("Unsuported tensor precision: " + get_precision_str(precision));
 }
