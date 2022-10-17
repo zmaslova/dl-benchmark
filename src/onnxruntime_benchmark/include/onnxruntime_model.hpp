@@ -19,6 +19,8 @@ struct ONNXTensorDescr {
 
     bool is_image() const;
     bool is_dynamic() const;
+    bool has_batch() const;
+    bool is_dynamic_batch() const;
     int64_t get_dimension_by_layout(char ch) const;
     int64_t channels() const;
     int64_t width() const;

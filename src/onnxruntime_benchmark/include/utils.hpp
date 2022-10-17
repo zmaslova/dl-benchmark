@@ -61,6 +61,8 @@ std::string get_precision_str(DataPrecision p);
 
 size_t get_batch_size(const InputsInfo &inputs_info);
 
+void set_batch_size(InputsInfo &inputs_info, int batch_size);
+
 std::string guess_layout_from_shape(std::vector<int64_t> &shape);
 
 static inline void catcher() noexcept {
