@@ -38,8 +38,8 @@ void set_batch_size(InputsInfo &inputs_info, int batch_size) {
     }
 }
 
-size_t get_batch_size(const InputsInfo &inputs_info) {
-    size_t batch_size = 0;
+int get_batch_size(const InputsInfo &inputs_info) {
+    int batch_size = 0;
     for (auto &[name, info] : inputs_info) {
         auto &tensor_descr = info.tensor_descr;
         std::size_t batch_index = tensor_descr.layout.find("N");

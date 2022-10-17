@@ -18,7 +18,7 @@ std::map<std::string, std::vector<std::string>> parse_input_files_arguments(cons
 
 std::map<std::string, std::string> parse_shape_or_layout_string(const std::string &parameter_string);
 
-std::vector<int64_t> parse_shape_string();
+std::vector<int> parse_shape_string();
 
 std::vector<std::string> split(const std::string &s, char delim);
 

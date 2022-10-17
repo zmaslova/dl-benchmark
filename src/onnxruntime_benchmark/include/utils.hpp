@@ -59,7 +59,7 @@ DataPrecision get_data_precision(ONNXTensorElementDataType type);
 
 std::string get_precision_str(DataPrecision p);
 
-size_t get_batch_size(const InputsInfo &inputs_info);
+int get_batch_size(const InputsInfo &inputs_info);
 
 void set_batch_size(InputsInfo &inputs_info, int batch_size);
 

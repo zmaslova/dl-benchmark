@@ -68,7 +68,7 @@ Ort::Value create_random_tensor(const InputDescr &input_descr,
                                            tensor_descr.shape.size(),
                                            tensor_descr.elem_type);
     auto tensor_data = tensor.GetTensorMutableData<T>();
-    size_t tensor_size =
+    int64_t tensor_size =
         std::accumulate(tensor_descr.shape.begin(), tensor_descr.shape.end(), 1, std::multiplies<int64_t>());
 
     std::mt19937 gen(0);
@@ -84,7 +84,7 @@ Ort::Value create_tensor_from_image(const InputDescr &input_descr, int batch_siz
     auto tensor_descr = input_descr.tensor_descr;
     const auto &files = input_descr.files;
 
-    if (files.size() < batch_size) {
+    if (static_cast<int>(files.size()) < batch_size) {
         logger::warn << "Number of input files less than batch size. Some files will be duplicated" << logger::endl;
     }
 
@@ -99,7 +99,7 @@ Ort::Value create_tensor_from_image(const InputDescr &input_descr, int batch_siz
     size_t width = tensor_descr.shape[2];
     size_t height = tensor_descr.shape[3];
 
-    for (size_t b = 0; b < batch_size; ++b) {
+    for (int b = 0; b < batch_size; ++b) {
         const auto &file_path = files[(start_index + b) % files.size()];
         logger::info << "\t\t" << file_path << logger::endl;
         cv::Mat img = read_image(file_path, height, width);
@@ -123,7 +123,7 @@ template <class T>
 Ort::Value create_tensor_from_binary(const InputDescr &input_descr, int batch_size, int start_index) {
     auto tensor_descr = input_descr.tensor_descr;
     const auto &files = input_descr.files;
-    if (files.size() < batch_size) {
+    if (static_cast<int>(files.size()) < batch_size) {
         logger::warn << "Number of input files less than batch size. Some files will be duplicated" << logger::endl;
     }
 
@@ -135,7 +135,7 @@ Ort::Value create_tensor_from_binary(const InputDescr &input_descr, int batch_si
                                            tensor_descr.shape.size(),
                                            tensor_descr.elem_type);
     auto tensor_data = tensor.GetTensorMutableData<char>();
-    for (size_t b = 0; b < batch_size; ++b) {
+    for (int b = 0; b < batch_size; ++b) {
         size_t input_id = (start_index + b) % files.size();
         const auto &file_path = files[input_id];
         logger::info << "\t\t" << file_path << logger::endl;

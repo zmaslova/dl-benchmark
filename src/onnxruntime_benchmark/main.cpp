@@ -107,7 +107,7 @@ int main(int argc, char *argv[]) {
                                        FLAGS_mean,
                                        FLAGS_scale);
 
-    size_t batch_size = get_batch_size(inputs_info);
+    int batch_size = get_batch_size(inputs_info);
     if (batch_size == -1 && FLAGS_b > 0) {
         batch_size = FLAGS_b;
     }

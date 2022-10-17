@@ -25,7 +25,7 @@ struct ONNXTensorDescr {
     int64_t channels() const;
     int64_t width() const;
     int64_t height() const;
-    void set_batch(int64_t batch_size);
+    void set_batch(int batch_size);
 };
 
 class ONNXModel {
