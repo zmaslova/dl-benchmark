@@ -1,7 +1,9 @@
 #include "utils.hpp"
+
 #include "inputs_preparation.hpp"
 
 #include <onnxruntime_cxx_api.h>
+
 #include <algorithm>
 #include <exception>
 #include <filesystem>
@@ -28,6 +30,12 @@ std::string get_precision_str(DataPrecision p) {
         }
     }
     return "UNKNOWN";
+}
+
+void set_batch_size(InputsInfo &inputs_info, int batch_size) {
+    for (auto &[_, input_descr] : inputs_info) {
+        input_descr.tensor_descr.set_batch(batch_size);
+    }
 }
 
 size_t get_batch_size(const InputsInfo &inputs_info) {

@@ -20,6 +20,17 @@ bool ONNXTensorDescr::is_dynamic() const {
     return std::find(shape.begin(), shape.end(), -1) != shape.end();
 }
 
+bool ONNXTensorDescr::has_batch() const {
+    return layout.find("N") != std::string::npos;
+}
+
+bool ONNXTensorDescr::is_dynamic_batch() const {
+    if (has_batch()) {
+        return get_dimension_by_layout('N') == -1;
+    }
+    return false;
+}
+
 void ONNXTensorDescr::set_batch(int64_t batch_size) {
     std::size_t batch_index = layout.find("N");
     if (batch_index != std::string::npos) {
@@ -113,10 +124,7 @@ void ONNXModel::fill_inputs_outputs_info() {
 std::vector<ONNXTensorDescr> ONNXModel::get_input_tensors_info() const {
     std::vector<ONNXTensorDescr> input_tensors_info;
     for (int i = 0; i < io.input_names.size(); ++i) {
-        input_tensors_info.push_back({std::string(io.input_names[i]),
-                                      io.input_shapes[i],
-                                      "",
-                                      io.input_data_types[i]});
+        input_tensors_info.push_back({std::string(io.input_names[i]), io.input_shapes[i], "", io.input_data_types[i]});
     }
     return input_tensors_info;
 }

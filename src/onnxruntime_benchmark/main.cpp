@@ -6,8 +6,8 @@
 #include <gflags/gflags.h>
 
 #include <iostream>
-#include <vector>
 #include <string>
+#include <vector>
 
 namespace {
 constexpr char help_msg[] = "show the help message and exit";
@@ -67,7 +67,7 @@ void parse(int argc, char *argv[]) {
                   << "\n\t[-h]                                         " << help_msg
                   << "\n\t[-help]                                      print help on all arguments"
                   << "\n\t -m <MODEL FILE>                             " << model_msg
-                  << "\n\t -i <INPUT>                                  " << input_msg
+                  << "\n\t[-i <INPUT>]                                 " << input_msg
                   << "\n\t[-b <NUMBER>]                                " << batch_size_msg
                   << "\n\t[-shape <[N,C,H,W]>]                         " << shape_msg
                   << "\n\t[-layout <[NCHW]>]                           " << layout_msg
@@ -117,6 +117,8 @@ int main(int argc, char *argv[]) {
     else if (FLAGS_b > 0) {
         throw std::logic_error("Can't set batch for model with static batch dimension.");
     }
+
+    set_batch_size(inputs_info, batch_size);
     logger::info << "Set batch to " << batch_size << logger::endl;
 
     int tensors_num = 1;

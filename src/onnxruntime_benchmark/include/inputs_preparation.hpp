@@ -1,8 +1,9 @@
 #pragma once
-#include "utils.hpp"
 #include "onnxruntime_model.hpp"
+#include "utils.hpp"
 
 #include <onnxruntime_cxx_api.h>
+
 #include <cstdint>
 #include <map>
 #include <string>
