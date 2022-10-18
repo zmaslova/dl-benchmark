@@ -33,9 +33,14 @@ class OpenVINOTransformer(Transformer):
         return shape[1], shape[2], shape[3]
 
     def transform_images(self, images, shape, element_type):
-        b = shape[0]
+        batch = shape[0]
+        dataset_size = images.shape[0]
+        if (batch > dataset_size):
+            # duplicate images when batch size is bigger than dataset size
+            repeats = int(np.ceil(batch / dataset_size))
+            images = np.repeat(images, repeats, axis=0)
         transformed_images = np.zeros(shape=shape, dtype=element_type)
-        for i in range(b):
+        for i in range(batch):
             transformed_images[i] = self._transform(images[i], shape)
         return transformed_images
 
