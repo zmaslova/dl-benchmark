@@ -3,13 +3,30 @@
 
 #include <onnxruntime_cxx_api.h>
 
+#include <chrono>
 #include <cstdint>
 #include <exception>
+#include <iomanip>
 #include <iterator>
 #include <map>
 #include <sstream>
 #include <string>
 #include <vector>
+
+using HighresClock = std::chrono::high_resolution_clock;
+using ns = std::chrono::nanoseconds;
+
+inline double ns_to_ms(std::chrono::nanoseconds duration) {
+    return static_cast<double>(duration.count()) * 0.000001;
+}
+
+inline uint64_t sec_to_ms(uint32_t duration) {
+    return duration * 1000LL;
+}
+
+inline uint64_t sec_to_ns(uint32_t duration) {
+    return duration * 1000000000LL;
+}
 
 struct InputDescr;
 using InputsInfo = std::map<std::string, InputDescr>;
@@ -64,6 +81,12 @@ int get_batch_size(const InputsInfo &inputs_info);
 void set_batch_size(InputsInfo &inputs_info, int batch_size);
 
 std::string guess_layout_from_shape(std::vector<int64_t> &shape);
+
+inline std::string format_double(const double number) {
+    std::stringstream ss;
+    ss << std::fixed << std::setprecision(2) << number;
+    return ss.str();
+};
 
 static inline void catcher() noexcept {
     if (std::current_exception()) {

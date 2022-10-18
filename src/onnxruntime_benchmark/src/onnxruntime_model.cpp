@@ -7,6 +7,8 @@
 #include <onnxruntime_cxx_api.h>
 #include <opencv2/core/mat.hpp>
 
+#include <algorithm>
+#include <chrono>
 #include <iostream>
 #include <numeric>
 #include <string>
@@ -148,12 +150,32 @@ void check_output(const std::vector<Ort::Value> &output_tensors, int batch_size)
     }
 }
 
-void ONNXModel::run(const std::vector<Ort::Value> &input_tensors) const {
-    auto output_tensors = session->Run(Ort::RunOptions{nullptr},
-                                       io.input_names.data(),
-                                       input_tensors.data(),
-                                       io.input_names.size(),
-                                       io.output_names.data(),
-                                       io.output_names.size());
-    check_output(output_tensors, 3);
+void ONNXModel::reset_timers() {
+    total_start_time = HighresClock::time_point::max();
+    total_end_time = HighresClock::time_point::min();
+    latencies.clear();
+}
+
+std::vector<double> ONNXModel::get_latencies() {
+    return latencies;
+}
+
+double ONNXModel::get_total_time_ms() {
+    return ns_to_ms(total_end_time - total_start_time);
+}
+
+void ONNXModel::run(const std::vector<Ort::Value> &input_tensors) {
+    total_start_time = std::min(HighresClock::now(), total_start_time);
+
+    infer_start_time = HighresClock::now();
+    session->Run(Ort::RunOptions{nullptr},
+                 io.input_names.data(),
+                 input_tensors.data(),
+                 io.input_names.size(),
+                 io.output_names.data(),
+                 io.output_names.size());
+    latencies.push_back(ns_to_ms(HighresClock::now() - infer_start_time));
+
+    total_end_time = std::max(HighresClock::now(), total_end_time);
+    // check_output(output_tensors, 3);
 }
