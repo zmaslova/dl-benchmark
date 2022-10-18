@@ -1,10 +1,12 @@
 #include "args_handler.hpp"
 #include "inputs_preparation.hpp"
 #include "onnxruntime_model.hpp"
+#include "statistics.hpp"
 #include "utils.hpp"
 
 #include <gflags/gflags.h>
 
+#include <chrono>
 #include <iostream>
 #include <string>
 #include <vector>
@@ -107,6 +109,7 @@ int main(int argc, char *argv[]) {
                                        FLAGS_mean,
                                        FLAGS_scale);
 
+    // determine batch size
     int batch_size = get_batch_size(inputs_info);
     if (batch_size == -1 && FLAGS_b > 0) {
         batch_size = FLAGS_b;
@@ -118,17 +121,66 @@ int main(int argc, char *argv[]) {
         throw std::logic_error("Can't set batch for model with static batch dimension.");
     }
 
+    // setting batch
     set_batch_size(inputs_info, batch_size);
     logger::info << "Set batch to " << batch_size << logger::endl;
 
-    int tensors_num = 1;
-    if (FLAGS_ntensors > 0) {
-        tensors_num = FLAGS_ntensors;
+    // number of input tensors to infer (analogue of infer requests from benchmark_app)
+    int num_tensors = FLAGS_ntensors;
+    if (FLAGS_ntensors == 0) {
+        num_tensors = 1;
     }
 
-    auto tensors = get_input_tensors(inputs_info, batch_size, tensors_num);
-    for (auto &t : tensors) {
-        model.run(t);
+    // set and align iterations limit
+    int64_t num_iterations = FLAGS_niter;
+    if (num_iterations > 0) {
+        num_iterations = ((num_iterations + num_tensors - 1) / num_tensors) * num_tensors;
+        if (FLAGS_niter != num_iterations) {
+            logger::warn << "Provided number of iterations " << FLAGS_niter << " was changed to " << num_iterations
+                         << " to be aligned with number of tensors  " << num_tensors << logger::endl;
+        }
     }
+
+    // set time limit
+    uint32_t time_limit_sec = 0;
+    if (FLAGS_t != 0) {
+        time_limit_sec = FLAGS_t;
+    }
+    else if (FLAGS_niter == 0) {
+        time_limit_sec = 60;
+        logger::warn << "Default time limit is set: " << time_limit_sec << " seconds " << logger::endl;
+    }
+    uint64_t time_limit_ns = sec_to_ns(time_limit_sec);
+
+    auto tensors = get_input_tensors(inputs_info, batch_size, num_tensors);
+
+    // warm up before benhcmarking
+    model.run(tensors[0]);
+    logger::info << "Warming up inference took " << format_double(model.get_latencies()[0]) << " ms" << logger::endl;
+    model.reset_timers();
+
+    int64_t iteration = 0;
+    auto start_time = HighresClock::now();
+    auto uptime = std::chrono::duration_cast<ns>(HighresClock::now() - start_time).count();
+    while ((num_iterations != 0 && iteration < num_iterations) ||
+           (time_limit_ns != 0 && static_cast<uint64_t>(uptime) < time_limit_ns)) {
+        model.run(tensors[iteration % tensors.size()]);
+        ++iteration;
+        uptime = std::chrono::duration_cast<ns>(HighresClock::now() - start_time).count();
+    }
+
+    Metrics metrics(model.get_latencies(), batch_size);
+    double total_time = model.get_total_time_ms();
+
+    // Performance metrics report
+    logger::info << "Count: " << iteration << " iterations" << logger::endl;
+    logger::info << "Duration: " << format_double(total_time) << " ms" << logger::endl;
+    logger::info << "Latency:" << logger::endl;
+    logger::info << "\tMedian   " << format_double(metrics.median) << " ms" << logger::endl;
+    logger::info << "\tAverage: " << format_double(metrics.avg) << " ms" << logger::endl;
+    logger::info << "\tMin:     " << format_double(metrics.min) << " ms" << logger::endl;
+    logger::info << "\tMax:     " << format_double(metrics.max) << " ms" << logger::endl;
+    logger::info << "Throughput: " << format_double(metrics.fps) << " FPS" << logger::endl;
+
     return 0;
 }
