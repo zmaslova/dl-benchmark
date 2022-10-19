@@ -1,6 +1,7 @@
 #include "args_handler.hpp"
 
 #include "logger.hpp"
+#include "onnxruntime_model.hpp"
 
 #include <algorithm>
 #include <exception>
@@ -178,4 +179,19 @@ std::map<std::string, std::string> parse_shape_or_layout_string(const std::strin
     }
 
     return return_value;
+}
+
+void log_model_inputs_outputs(const IOTensorsInfo &tensors_info) {
+    const auto &[model_inputs, model_outputs] = tensors_info;
+
+    logger::info << "Model inputs:" << logger::endl;
+    for (const auto &input : model_inputs) {
+        logger::info << "\t" << input.name << ": " << get_precision_str(get_data_precision(input.type)) << " "
+                     << shape_string(input.shape) << logger::endl;
+    }
+    logger::info << "Model outputs:" << logger::endl;
+    for (const auto &output : model_outputs) {
+        logger::info << "\t" << output.name << ": " << get_precision_str(get_data_precision(output.type)) << " "
+                     << shape_string(output.shape) << logger::endl;
+    }
 }

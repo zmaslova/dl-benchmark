@@ -13,23 +13,11 @@
 #include <string>
 #include <vector>
 
-using HighresClock = std::chrono::high_resolution_clock;
-using ns = std::chrono::nanoseconds;
-
-inline double ns_to_ms(std::chrono::nanoseconds duration) {
-    return static_cast<double>(duration.count()) * 0.000001;
-}
-
-inline uint64_t sec_to_ms(uint32_t duration) {
-    return duration * 1000LL;
-}
-
-inline uint64_t sec_to_ns(uint32_t duration) {
-    return duration * 1000000000LL;
-}
-
 struct InputDescr;
 using InputsInfo = std::map<std::string, InputDescr>;
+
+using HighresClock = std::chrono::high_resolution_clock;
+using ns = std::chrono::nanoseconds;
 
 enum class DataPrecision : unsigned int {
     FP32 = 0,
@@ -82,22 +70,16 @@ void set_batch_size(InputsInfo &inputs_info, int batch_size);
 
 std::string guess_layout_from_shape(std::vector<int64_t> &shape);
 
-inline std::string format_double(const double number) {
-    std::stringstream ss;
-    ss << std::fixed << std::setprecision(2) << number;
-    return ss.str();
-};
+std::string format_double(const double number);
 
-static inline void catcher() noexcept {
-    if (std::current_exception()) {
-        try {
-            std::rethrow_exception(std::current_exception());
-        } catch (const std::exception &error) {
-            logger::err << error.what() << logger::endl;
-        } catch (...) {
-            logger::err << "Non-exception object thrown" << logger::endl;
-        }
-        std::exit(1);
-    }
-    std::abort();
+static inline double ns_to_ms(std::chrono::nanoseconds duration) {
+    return static_cast<double>(duration.count()) * 0.000001;
+}
+
+static inline uint64_t sec_to_ms(uint32_t duration) {
+    return duration * 1000LL;
+}
+
+static inline uint64_t sec_to_ns(uint32_t duration) {
+    return duration * 1000000000LL;
 }

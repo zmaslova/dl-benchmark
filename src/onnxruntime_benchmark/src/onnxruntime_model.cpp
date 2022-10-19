@@ -66,24 +66,17 @@ void ONNXModel::read_model(const std::string &model_path) {
 
     env = std::make_shared<Ort::Env>(ORT_LOGGING_LEVEL_ERROR, "ORT Bench");
     Ort::SessionOptions session_options;
-    // Profile enabling?
     session_options.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_ALL);
-    // if (device_type == DLBenchDevice::CPU) { // log device and nthreads
     session_options.SetExecutionMode(ExecutionMode::ORT_SEQUENTIAL); // Parallel
     if (nthreads > 0) {
         session_options.SetIntraOpNumThreads(nthreads);
     }
-    logger::info << "Reading model " << model_path << logger::endl;
     session = std::make_shared<Ort::Session>(*env, model_path.c_str(), session_options);
-    logger::info << "Device: CPU" << logger::endl;
-    logger::info << "\tNumber of threads: " << (nthreads != 0 ? std::to_string(nthreads) : "DEFAULT") << logger::endl;
-    fill_inputs_outputs_info();
 }
 
 void ONNXModel::fill_inputs_outputs_info() {
     auto allocator = Ort::AllocatorWithDefaultOptions();
     // Get input from model
-    logger::info << "Model inputs:" << logger::endl;
     for (size_t i = 0; i < session->GetInputCount(); ++i) {
         // get input name
         auto input_name = session->GetInputNameAllocated(i, allocator);
@@ -98,14 +91,9 @@ void ONNXModel::fill_inputs_outputs_info() {
         // get input shapes/dims
         auto input_node_shape = tensor_info.GetShape();
         io.input_shapes.push_back(input_node_shape);
-
-        // log inputs infor
-        logger::info << "\t" << io.input_names[i] << ": " << get_precision_str(get_data_precision(type)) << " "
-                     << shape_string(tensor_info.GetShape()) << logger::endl;
     }
 
     // Get outputs from model
-    logger::info << "Model outputs:" << logger::endl;
     for (size_t i = 0; i < session->GetOutputCount(); ++i) {
         // get output name
         auto output_name = session->GetOutputNameAllocated(i, allocator);
@@ -116,19 +104,25 @@ void ONNXModel::fill_inputs_outputs_info() {
         auto type_info = session->GetOutputTypeInfo(i);
         auto tensor_info = type_info.GetTensorTypeAndShapeInfo();
         ONNXTensorElementDataType type = tensor_info.GetElementType();
+        io.output_data_types.push_back(type);
 
-        // log outputs info
-        logger::info << "\t" << io.output_names[i] << ": " << get_precision_str(get_data_precision(type)) << " "
-                     << shape_string(tensor_info.GetShape()) << logger::endl;
+        // get input shapes/dims
+        auto output_node_shape = tensor_info.GetShape();
+        io.output_shapes.push_back(output_node_shape);
     }
 }
 
-std::vector<ONNXTensorDescr> ONNXModel::get_input_tensors_info() const {
+IOTensorsInfo ONNXModel::get_io_tensors_info() const {
     std::vector<ONNXTensorDescr> input_tensors_info;
     for (size_t i = 0; i < io.input_names.size(); ++i) {
         input_tensors_info.push_back({std::string(io.input_names[i]), io.input_shapes[i], "", io.input_data_types[i]});
     }
-    return input_tensors_info;
+    std::vector<ONNXTensorDescr> output_tensors_info;
+    for (size_t i = 0; i < io.output_names.size(); ++i) {
+        output_tensors_info.push_back(
+            {std::string(io.output_names[i]), io.output_shapes[i], "", io.output_data_types[i]});
+    }
+    return {input_tensors_info, output_tensors_info};
 }
 
 void check_output(const std::vector<Ort::Value> &output_tensors, int batch_size) {
