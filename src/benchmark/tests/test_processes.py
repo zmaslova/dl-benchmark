@@ -1,10 +1,10 @@
 import sys
 import logging as log
 import pytest
-from src.benchmark.processes import ProcessHandler, SyncOpenVINOProcess, AsyncOpenVINOProcess, \
-    OpenVINOBenchmarkPythonProcess, OpenVINOBenchmarkCppProcess, OpenVINOProcess, IntelCaffeProcess, \
-    TensorFlowProcess, OpenVINOBenchmarkProcess
-from src.benchmark.tests.test_executor import get_host_executor, get_docker_executor
+from src.benchmark.processes import (ProcessHandler, SyncOpenVINOProcess, AsyncOpenVINOProcess,
+                                     OpenVINOBenchmarkPythonProcess, OpenVINOBenchmarkCppProcess, OpenVINOProcess,
+                                     IntelCaffeProcess, TensorFlowProcess)
+from src.benchmark.tests.test_executor import get_host_executor
 
 log.basicConfig(
     format='[ %(levelname)s ] %(message)s',
@@ -20,12 +20,12 @@ class DotDict(dict):
     __delattr__ = dict.__delitem__
 
 
-OPENVINO_BENCHMARK_RESULT_RAW = '''
+OPENVINO_BENCHMARK_RESULT_RAW = """
 [Step 11/11] Dumping statistics report
 [ INFO ] Statistics report is stored to benchmark_report.csv
 [ INFO ] Count:      1000 iterations
 [ INFO ] Duration:   37201.83 ms
-[ INFO ] Latency: 
+[ INFO ] Latency:
 [ INFO ]        Median:     73.26 ms
 [ INFO ]        Average:    74.38 ms
 [ INFO ]        Min:        64.50 ms
@@ -34,7 +34,7 @@ OPENVINO_BENCHMARK_RESULT_RAW = '''
 [ INFO ] Returncode = 0
 [ INFO ] End inference test on model : resnet-50-pytorch
 [ INFO ] Saving test result in file
-'''
+"""
 TEST_BASIC_LINE = DotDict({'indep_parameters': DotDict({'inference_framework': 'inference_framework'}),
                            'dep_parameters': DotDict({'mode': 'mode'}),
                            'model': DotDict({'model': 'model'})})
