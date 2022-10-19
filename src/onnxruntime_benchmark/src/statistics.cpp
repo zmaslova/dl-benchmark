@@ -7,13 +7,13 @@
 
 void Metrics::calc_latencies(std::vector<double> latencies, int percentile_boundary) {
     std::sort(latencies.begin(), latencies.end());
-    min = latencies[0];
-    avg = std::accumulate(latencies.begin(), latencies.end(), 0.0) / latencies.size();
-    median = latencies[int(latencies.size() / 100.0 * 50)];
+    latency.min = latencies[0];
+    latency.avg = std::accumulate(latencies.begin(), latencies.end(), 0.0) / latencies.size();
+    latency.median = latencies[int(latencies.size() / 100.0 * 50)];
     if (percentile_boundary) {
-        percentile = latencies[int(latencies.size() / 100.0 * percentile_boundary)];
+        latency.percentile = latencies[int(latencies.size() / 100.0 * percentile_boundary)];
     }
-    max = latencies.back();
+    latency.max = latencies.back();
 }
 
 void Metrics::calc_fps(double latency, int batch_size) {
@@ -25,5 +25,5 @@ Metrics::Metrics(const std::vector<double> &latencies, int batch_size, int perce
         throw std::invalid_argument("Latency metrics class expects non-empty vector of latencies at consturction.");
     }
     calc_latencies(latencies, percentile_boundary);
-    calc_fps(median, batch_size);
+    calc_fps(latency.median, batch_size);
 }

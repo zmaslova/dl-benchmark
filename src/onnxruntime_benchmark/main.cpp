@@ -5,7 +5,6 @@
 #include "utils.hpp"
 
 #include <gflags/gflags.h>
-#include <onnxruntime_c_api.h>
 #include <onnxruntime_cxx_api.h>
 
 #include <chrono>
@@ -227,10 +226,10 @@ int main(int argc, char *argv[]) {
     logger::info << "Count: " << iteration << " iterations" << logger::endl;
     logger::info << "Duration: " << format_double(total_time) << " ms" << logger::endl;
     logger::info << "Latency:" << logger::endl;
-    logger::info << "\tMedian   " << format_double(metrics.median) << " ms" << logger::endl;
-    logger::info << "\tAverage: " << format_double(metrics.avg) << " ms" << logger::endl;
-    logger::info << "\tMin:     " << format_double(metrics.min) << " ms" << logger::endl;
-    logger::info << "\tMax:     " << format_double(metrics.max) << " ms" << logger::endl;
+    logger::info << "\tMedian   " << format_double(metrics.latency.median) << " ms" << logger::endl;
+    logger::info << "\tAverage: " << format_double(metrics.latency.avg) << " ms" << logger::endl;
+    logger::info << "\tMin:     " << format_double(metrics.latency.min) << " ms" << logger::endl;
+    logger::info << "\tMax:     " << format_double(metrics.latency.max) << " ms" << logger::endl;
     logger::info << "Throughput: " << format_double(metrics.fps) << " FPS" << logger::endl;
 
     return 0;

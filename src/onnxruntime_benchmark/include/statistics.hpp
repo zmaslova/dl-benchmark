@@ -8,11 +8,13 @@ private:
     void calc_fps(double latency, int batch_size);
 
 public:
-    double median = 0;
-    double percentile = 0;
-    double avg = 0;
-    double min = 0;
-    double max = 0;
+    struct {
+        double median = 0;
+        double avg = 0;
+        double min = 0;
+        double max = 0;
+        double percentile = 0;
+    } latency;
     double fps = 0;
 
     Metrics() {}
