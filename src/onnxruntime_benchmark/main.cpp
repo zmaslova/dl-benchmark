@@ -5,6 +5,8 @@
 #include "utils.hpp"
 
 #include <gflags/gflags.h>
+#include <onnxruntime_c_api.h>
+#include <onnxruntime_cxx_api.h>
 
 #include <chrono>
 #include <iostream>
@@ -87,27 +89,72 @@ void parse(int argc, char *argv[]) {
         throw std::invalid_argument{"-m <MODEL FILE> can't be empty"};
     }
 }
+
+static void log_step(const std::string optional_info = "") {
+    static size_t step_id = 0;
+    static const std::map<size_t, std::string> steps = {{1, "Parsing and validating input arguments"},
+                                                        {2, "Loading ONNX Runtime"},
+                                                        {3, "Reading model files"},
+                                                        {4, "Configuring input of the model"},
+                                                        {5, "Setting execution parameters"},
+                                                        {6, "Creating input tensors"},
+                                                        {7, "Measuring model performance"},
+                                                        {8, "Saving statistics report"}};
+
+    step_id++;
+    if (steps.count(step_id) == 0) {
+        throw std::invalid_argument("Invalid number of step " + std::to_string(step_id) +
+                                    " was provided, number of the step should be less than " +
+                                    std::to_string(steps.size()));
+    }
+
+    std::cout << "[Step " << step_id << "/" << steps.size() << "] " << steps.at(step_id)
+              << (optional_info.empty() ? "" : " (" + optional_info + ")") << std::endl;
+}
+
+void catcher() noexcept {
+    if (std::current_exception()) {
+        try {
+            std::rethrow_exception(std::current_exception());
+        } catch (const std::exception &error) {
+            logger::err << error.what() << logger::endl;
+        } catch (...) {
+            logger::err << "Non-exception object thrown" << logger::endl;
+        }
+        std::exit(1);
+    }
+    std::abort();
+}
+
 } // namespace
 
 int main(int argc, char *argv[]) {
     std::set_terminate(catcher);
+    log_step();
     logger::info << "Parsing input arguments" << logger::endl;
     parse(argc, argv);
+
     logger::info << "Checking input files" << logger::endl;
     std::vector<gflags::CommandLineFlagInfo> flags;
-
     gflags::GetAllFlags(&flags);
     auto input_files = parse_input_files_arguments(gflags::GetArgvs());
-
+    log_step();
+    logger::info << "ONNX Runtime version: " << OrtGetApiBase()->GetVersionString() << logger::endl;
+    log_step();
     ONNXModel model(FLAGS_nthreads);
+    logger::info << "Reading model " << FLAGS_m << logger::endl;
+    auto start_time = HighresClock::now();
     model.read_model(FLAGS_m);
+    auto read_model_time = ns_to_ms(HighresClock::now() - start_time);
+    logger::info << "Read model took " << format_double(read_model_time) << " ms" << logger::endl;
+    logger::info << "Model inputs/outputs info" << logger::endl;
+    model.fill_inputs_outputs_info();
+    auto io_tensors_info = model.get_io_tensors_info();
+    log_model_inputs_outputs(io_tensors_info);
 
-    auto inputs_info = get_inputs_info(input_files,
-                                       model.get_input_tensors_info(),
-                                       FLAGS_layout,
-                                       FLAGS_shape,
-                                       FLAGS_mean,
-                                       FLAGS_scale);
+    log_step();
+    auto inputs_info =
+        get_inputs_info(input_files, io_tensors_info.first, FLAGS_layout, FLAGS_shape, FLAGS_mean, FLAGS_scale);
 
     // determine batch size
     int batch_size = get_batch_size(inputs_info);
@@ -125,6 +172,7 @@ int main(int argc, char *argv[]) {
     set_batch_size(inputs_info, batch_size);
     logger::info << "Set batch to " << batch_size << logger::endl;
 
+    log_step();
     // number of input tensors to infer (analogue of infer requests from benchmark_app)
     int num_tensors = FLAGS_ntensors;
     if (FLAGS_ntensors == 0) {
@@ -137,7 +185,7 @@ int main(int argc, char *argv[]) {
         num_iterations = ((num_iterations + num_tensors - 1) / num_tensors) * num_tensors;
         if (FLAGS_niter != num_iterations) {
             logger::warn << "Provided number of iterations " << FLAGS_niter << " was changed to " << num_iterations
-                         << " to be aligned with number of tensors  " << num_tensors << logger::endl;
+                         << " to be aligned with number of tensors " << num_tensors << logger::endl;
         }
     }
 
@@ -152,15 +200,17 @@ int main(int argc, char *argv[]) {
     }
     uint64_t time_limit_ns = sec_to_ns(time_limit_sec);
 
+    log_step();
     auto tensors = get_input_tensors(inputs_info, batch_size, num_tensors);
 
+    log_step();
     // warm up before benhcmarking
     model.run(tensors[0]);
     logger::info << "Warming up inference took " << format_double(model.get_latencies()[0]) << " ms" << logger::endl;
     model.reset_timers();
 
     int64_t iteration = 0;
-    auto start_time = HighresClock::now();
+    start_time = HighresClock::now();
     auto uptime = std::chrono::duration_cast<ns>(HighresClock::now() - start_time).count();
     while ((num_iterations != 0 && iteration < num_iterations) ||
            (time_limit_ns != 0 && static_cast<uint64_t>(uptime) < time_limit_ns)) {
@@ -169,6 +219,7 @@ int main(int argc, char *argv[]) {
         uptime = std::chrono::duration_cast<ns>(HighresClock::now() - start_time).count();
     }
 
+    log_step();
     Metrics metrics(model.get_latencies(), batch_size);
     double total_time = model.get_total_time_ms();
 

@@ -44,13 +44,13 @@ template <typename T>
 const T get_mat_value(const cv::Mat &mat, size_t h, size_t w, size_t c) {
     switch (mat.type()) {
         case CV_8UC1:
-            return (T)mat.at<uchar>(h, w);
+            return static_cast<T>(mat.at<uchar>(h, w));
         case CV_8UC3:
-            return (T)mat.at<cv::Vec3b>(h, w)[c];
+            return static_cast<T>(mat.at<cv::Vec3b>(h, w)[c]);
         case CV_32FC1:
-            return (T)mat.at<float>(h, w);
+            return static_cast<T>(mat.at<float>(h, w));
         case CV_32FC3:
-            return (T)mat.at<cv::Vec3f>(h, w)[c];
+            return static_cast<T>(mat.at<cv::Vec3f>(h, w)[c]);
     }
     throw std::runtime_error("cv::Mat type is not recognized");
 };
@@ -63,10 +63,8 @@ Ort::Value create_random_tensor(const InputDescr &input_descr,
     auto tensor_descr = input_descr.tensor_descr;
 
     auto allocator = Ort::AllocatorWithDefaultOptions();
-    auto tensor = Ort::Value::CreateTensor(allocator,
-                                           tensor_descr.shape.data(),
-                                           tensor_descr.shape.size(),
-                                           tensor_descr.elem_type);
+    auto tensor =
+        Ort::Value::CreateTensor(allocator, tensor_descr.shape.data(), tensor_descr.shape.size(), tensor_descr.type);
     auto tensor_data = tensor.GetTensorMutableData<T>();
     int64_t tensor_size =
         std::accumulate(tensor_descr.shape.begin(), tensor_descr.shape.end(), 1, std::multiplies<int64_t>());
@@ -84,15 +82,9 @@ Ort::Value create_tensor_from_image(const InputDescr &input_descr, int batch_siz
     auto tensor_descr = input_descr.tensor_descr;
     const auto &files = input_descr.files;
 
-    if (static_cast<int>(files.size()) < batch_size) {
-        logger::warn << "Number of input files less than batch size. Some files will be duplicated" << logger::endl;
-    }
-
     auto allocator = Ort::AllocatorWithDefaultOptions();
-    auto tensor = Ort::Value::CreateTensor(allocator,
-                                           tensor_descr.shape.data(),
-                                           tensor_descr.shape.size(),
-                                           tensor_descr.elem_type);
+    auto tensor =
+        Ort::Value::CreateTensor(allocator, tensor_descr.shape.data(), tensor_descr.shape.size(), tensor_descr.type);
     auto tensor_data = tensor.GetTensorMutableData<T>();
 
     size_t channels = tensor_descr.shape[1];
@@ -103,15 +95,12 @@ Ort::Value create_tensor_from_image(const InputDescr &input_descr, int batch_siz
         const auto &file_path = files[(start_index + b) % files.size()];
         logger::info << "\t\t" << file_path << logger::endl;
         cv::Mat img = read_image(file_path, height, width);
-        // cv::imshow("Test", tmp);
-        // cv::waitKey(0);
         for (size_t w = 0; w < width; ++w) {
             for (size_t h = 0; h < height; ++h) {
                 for (size_t ch = 0; ch < channels; ++ch) {
                     size_t offset = b * channels * width * height + (ch * width * height + h * width + w);
                     tensor_data[offset] = (get_mat_value<T>(img, h, w, ch) - static_cast<T>(input_descr.mean[ch])) /
                                           static_cast<T>(input_descr.scale[ch]);
-                    ;
                 }
             }
         }
@@ -123,17 +112,12 @@ template <class T>
 Ort::Value create_tensor_from_binary(const InputDescr &input_descr, int batch_size, int start_index) {
     auto tensor_descr = input_descr.tensor_descr;
     const auto &files = input_descr.files;
-    if (static_cast<int>(files.size()) < batch_size) {
-        logger::warn << "Number of input files less than batch size. Some files will be duplicated" << logger::endl;
-    }
 
     size_t tensor_size =
         std::accumulate(tensor_descr.shape.begin(), tensor_descr.shape.end(), 1, std::multiplies<int64_t>());
     auto allocator = Ort::AllocatorWithDefaultOptions();
-    auto tensor = Ort::Value::CreateTensor(allocator,
-                                           tensor_descr.shape.data(),
-                                           tensor_descr.shape.size(),
-                                           tensor_descr.elem_type);
+    auto tensor =
+        Ort::Value::CreateTensor(allocator, tensor_descr.shape.data(), tensor_descr.shape.size(), tensor_descr.type);
     auto tensor_data = tensor.GetTensorMutableData<char>();
     for (int b = 0; b < batch_size; ++b) {
         size_t input_id = (start_index + b) % files.size();
@@ -149,7 +133,7 @@ Ort::Value create_tensor_from_binary(const InputDescr &input_descr, int batch_si
         auto input_size = tensor_size * sizeof(T) / batch_size;
         if (file_size != input_size) {
             throw std::invalid_argument("File " + file_path + " contains " + std::to_string(file_size) +
-                                        " bytes but the network expects " + std::to_string(input_size));
+                                        " bytes but the mdoel expects " + std::to_string(input_size));
         }
 
         binary_file.seekg(0, std::ios_base::beg);
@@ -170,8 +154,8 @@ Ort::Value create_tensor_from_binary(const InputDescr &input_descr, int batch_si
     return tensor;
 }
 
-Ort::Value get_image_tensor(const InputDescr &input_descr, int batch_size, int start_index) {
-    auto precision = get_data_precision(input_descr.tensor_descr.elem_type);
+Ort::Value get_tensor_from_image(const InputDescr &input_descr, int batch_size, int start_index) {
+    auto precision = get_data_precision(input_descr.tensor_descr.type);
     if (precision == DataPrecision::FP32) {
         return create_tensor_from_image<float>(input_descr, batch_size, start_index);
     }
@@ -185,8 +169,8 @@ Ort::Value get_image_tensor(const InputDescr &input_descr, int batch_size, int s
     throw std::invalid_argument("Unsuported tensor precision: " + get_precision_str(precision));
 }
 
-Ort::Value get_binary_tensor(const InputDescr &input_descr, int batch_size, int start_index) {
-    auto precision = get_data_precision(input_descr.tensor_descr.elem_type);
+Ort::Value get_tensor_from_binary(const InputDescr &input_descr, int batch_size, int start_index) {
+    auto precision = get_data_precision(input_descr.tensor_descr.type);
     if (precision == DataPrecision::FP32) {
         return create_tensor_from_binary<float>(input_descr, batch_size, start_index);
     }
@@ -203,7 +187,7 @@ Ort::Value get_binary_tensor(const InputDescr &input_descr, int batch_size, int 
 }
 
 Ort::Value get_random_tensor(const InputDescr &input_descr) {
-    auto precision = get_data_precision(input_descr.tensor_descr.elem_type);
+    auto precision = get_data_precision(input_descr.tensor_descr.type);
     if (precision == DataPrecision::FP32) {
         return create_random_tensor<float, float>(input_descr);
     }
@@ -229,16 +213,21 @@ std::vector<std::vector<Ort::Value>> get_input_tensors(const InputsInfo &inputs_
         for (const auto &[name, input_descr] : inputs_info) {
             const auto &tensor_descr = input_descr.tensor_descr;
             logger::info << " \t" << name << " (" << tensor_descr.layout << " "
-                         << get_precision_str(get_data_precision(tensor_descr.elem_type)) << " "
+                         << get_precision_str(get_data_precision(tensor_descr.type)) << " "
                          << shape_string(tensor_descr.shape) << ")" << logger::endl;
+
+            if (static_cast<int>(input_descr.files.size()) < batch_size) {
+                logger::warn << "\tNumber of input files is less than batch size. Some files will be duplicated."
+                             << logger::endl;
+            }
             if (input_descr.files.empty()) {
                 tensors[i].push_back(get_random_tensor(input_descr));
             }
             else if (tensor_descr.is_image()) {
-                tensors[i].push_back(get_image_tensor(input_descr, batch_size, start_file_index));
+                tensors[i].push_back(get_tensor_from_image(input_descr, batch_size, start_file_index));
             }
             else {
-                tensors[i].push_back(get_binary_tensor(input_descr, batch_size, start_file_index));
+                tensors[i].push_back(get_tensor_from_binary(input_descr, batch_size, start_file_index));
             }
         }
         start_file_index += batch_size;
@@ -264,7 +253,7 @@ InputsInfo get_inputs_info(const std::map<std::string, std::vector<std::string>>
     if (!mean_string.empty()) {
         mean = string_to_vec<float>(mean_string, ' ');
         if (mean.size() != 3) {
-            throw std::logic_error("Mean must have 3 values, one value per channel, bug given: " + mean_string);
+            throw std::logic_error("Mean must have 3 values, one value per channel, but given: " + mean_string);
         }
     }
     std::vector<float> scale = {1.f, 1.f, 1.f};
@@ -284,7 +273,7 @@ InputsInfo get_inputs_info(const std::map<std::string, std::vector<std::string>>
     });
 
     if (is_dynamic_input && !is_dynamic_batch && input_shapes.empty()) {
-        throw std::logic_error("Shapes must be specified explicitly for models with dynamic inputs.");
+        throw std::logic_error("Shapes must be specified explicitly for models with dynamic input shapes.");
     }
 
     InputsInfo input_info;
@@ -310,7 +299,8 @@ InputsInfo get_inputs_info(const std::map<std::string, std::vector<std::string>>
                 shape = input_shapes.at(name);
             }
             else if (input_shapes.count("") > 0 &&
-                     input_shapes.size() == 1) { // case with 1 input wihtout specifying name
+                     input_shapes.size() == 1) { // handle case without specifying name (one shape for one input, or one
+                                                 // shape for many inputs)
                 shape = input_shapes.at("");
             }
             else if (input_shapes.size() > 1) {
@@ -319,7 +309,7 @@ InputsInfo get_inputs_info(const std::map<std::string, std::vector<std::string>>
             }
         }
         else if (!is_dynamic_batch) {
-            logger::warn << "Model inputs is static, -shape option will be ignored!" << logger::endl;
+            logger::warn << "Model inputs are static, -shape option will be ignored!" << logger::endl;
         }
 
         auto &layout = tensor_descr.layout;

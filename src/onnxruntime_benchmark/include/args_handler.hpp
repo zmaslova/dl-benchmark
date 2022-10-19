@@ -13,6 +13,9 @@
 #include <string>
 #include <vector>
 
+struct ONNXTensorDescr;
+using IOTensorsInfo = std::pair<std::vector<ONNXTensorDescr>, std::vector<ONNXTensorDescr>>;
+
 std::map<std::string, std::vector<std::string>> parse_input_files_arguments(const std::vector<std::string> &args,
                                                                             size_t max_files = 20);
 
@@ -21,6 +24,8 @@ std::map<std::string, std::string> parse_shape_or_layout_string(const std::strin
 std::vector<int> parse_shape_string();
 
 std::vector<std::string> split(const std::string &s, char delim);
+
+void log_model_inputs_outputs(const IOTensorsInfo &tensors_info);
 
 template <typename T>
 std::string shape_string(std::vector<T> shape) {

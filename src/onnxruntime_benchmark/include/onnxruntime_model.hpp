@@ -18,7 +18,7 @@ struct ONNXTensorDescr {
     std::string name;
     std::vector<int64_t> shape;
     std::string layout;
-    ONNXTensorElementDataType elem_type;
+    ONNXTensorElementDataType type;
 
     bool is_image() const;
     bool is_dynamic() const;
@@ -31,6 +31,8 @@ struct ONNXTensorDescr {
     void set_batch(int batch_size);
 };
 
+using IOTensorsInfo = std::pair<std::vector<ONNXTensorDescr>, std::vector<ONNXTensorDescr>>;
+
 class ONNXModel {
 private:
     struct IOInfo {
@@ -41,6 +43,8 @@ private:
 
         std::vector<const char *> output_names;
         std::vector<Ort::AllocatedStringPtr> output_names_ptr;
+        std::vector<ONNXTensorElementDataType> output_data_types;
+        std::vector<std::vector<int64_t>> output_shapes;
     } io;
 
     int nthreads;
@@ -55,14 +59,13 @@ private:
     HighresClock::time_point infer_start_time;
     std::vector<double> latencies;
 
-    void fill_inputs_outputs_info();
-
 public:
     ONNXModel(int nthreads);
+    void fill_inputs_outputs_info();
     void reset_timers();
     std::vector<double> get_latencies();
     double get_total_time_ms();
     void read_model(const std::string &model);
-    std::vector<ONNXTensorDescr> get_input_tensors_info() const;
+    IOTensorsInfo get_io_tensors_info() const;
     void run(const std::vector<Ort::Value> &input_tensors);
 };

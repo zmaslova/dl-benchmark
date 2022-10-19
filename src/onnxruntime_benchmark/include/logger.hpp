@@ -9,9 +9,6 @@ namespace logger {
 class EndLine {};
 static constexpr EndLine endl;
 
-class BoolAlpha {};
-static constexpr BoolAlpha boolalpha;
-
 class LogStream {
     std::string prefix;
     std::ostream *lstream;
@@ -33,11 +30,6 @@ public:
     LogStream &operator<<(const EndLine &) {
         end_line = true;
         (*lstream) << std::endl;
-        return *this;
-    }
-
-    LogStream &operator<<(const BoolAlpha &) {
-        (*lstream) << std::boolalpha;
         return *this;
     }
 };

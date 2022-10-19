@@ -1,6 +1,7 @@
 #include "utils.hpp"
 
 #include "inputs_preparation.hpp"
+#include "onnxruntime_model.hpp"
 
 #include <onnxruntime_cxx_api.h>
 
@@ -71,3 +72,9 @@ std::string guess_layout_from_shape(std::vector<int64> &shape) {
     }
     throw std::invalid_argument("Unsupported shape with size " + std::to_string(shape.size()));
 }
+
+std::string format_double(const double number) {
+    std::stringstream ss;
+    ss << std::fixed << std::setprecision(2) << number;
+    return ss.str();
+};
