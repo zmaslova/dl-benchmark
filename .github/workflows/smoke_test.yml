@@ -10,10 +10,10 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - name: Code checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Setting up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: 3.8
 
@@ -25,3 +25,10 @@ jobs:
 
       - name: Run smoke test
         run: cd test/smoke_test && ./run_smoke_test.sh
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: results.csv
+          path: test/smoke_test/results.csv
+          retention-days: 1
