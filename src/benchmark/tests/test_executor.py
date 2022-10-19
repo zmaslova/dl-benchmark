@@ -1,10 +1,8 @@
 import sys
 import re
-
+import logging as log
 import psutil
 import pytest
-import logging as log
-
 from src.benchmark.executors import Executor, HostExecutor, DockerExecutor
 
 log.basicConfig(
@@ -17,13 +15,13 @@ log.basicConfig(
 class MockContainer:
     """A fake Docker API container object."""
 
-    def __init__(self, name=None, *args, **kwargs):
-        self.name = name
+    def __init__(self, *args, **kwargs):
+        self.name = kwargs['name']
         self.args = args
         self.kwargs = kwargs
 
-    def exec_run(self, *args, **kwargs):
-        return 0, "test: test\ntest: test\ntest: test".encode('utf-8')
+    def exec_run(self, *args, **kwargs):    # noqa
+        return 0, 'test: test\ntest: test\ntest: test'.encode('utf-8')
 
 
 class MockContainersApi:
@@ -35,7 +33,7 @@ class MockContainersApi:
     def run(self, *args, **kwargs):
         return MockContainer(*args, **kwargs)
 
-    def list(self):
+    def list(self):     # noqa
         if self.names:
             return [MockContainer(name=name) for name in self.names]
         return []
@@ -53,7 +51,7 @@ def get_host_executor(mocker):
 
 
 def get_docker_executor(mocker):
-    mocker.patch('docker.from_env', return_value=MockDockerApi(['test_target_framework', ]))
+    mocker.patch('docker.from_env', return_value=MockDockerApi(['test_target_framework']))
     executor = DockerExecutor(log)
     executor.my_target_framework = 'test_target_framework'
     return executor
@@ -92,8 +90,8 @@ def test_infrastructure(executor_instance, mocker):
 def test_execute_process(executor_instance, mocker):
     ex = executor_instance(mocker)
     if isinstance(ex, HostExecutor):
-        assert ex.execute_process(command_line='echo -n test | md5sum', timeout=999)[1][0] == \
-               '098f6bcd4621d373cade4e832627b4f6  -\n'
+        assert ex.execute_process(command_line='echo -n test | md5sum',
+                                  timeout=999)[1][0] == '098f6bcd4621d373cade4e832627b4f6  -\n'
     else:
         assert ex.execute_process(command_line='test docker', _=None) == (0, b'test: test\ntest: test\ntest: test')
 
@@ -102,11 +100,11 @@ def test_execute_process(executor_instance, mocker):
 def test_execute_process_timeout(executor_instance, mocker, caplog):
     ex = executor_instance(mocker)
     if isinstance(ex, HostExecutor):
-        res = ex.execute_process(command_line='sleep 5', timeout=0.01)
+        ex.execute_process(command_line='sleep 5', timeout=0.01)
         assert re.match(r'.*Timeout .* is reached, terminating.*', caplog.text)
 
 
 def test_process_kill_fail(mocker):
     ex = get_host_executor(mocker)
-    with pytest.raises(psutil.NoSuchProcess) as e_info:
+    with pytest.raises(psutil.NoSuchProcess):
         ex.kill_process(99999)
