@@ -42,9 +42,9 @@ class FrameworkWrapper(metaclass=ABCMeta):
 
 
 class FrameworkWrapperRegistry(metaclass=Singleton):
-    """Storage for all available framework wrappers.
-    A framework wrapper is `FrameworkWrapper` subclass located in a separate module (openvino.py, tensorflow.py etc)
-    inside frameworks/ package
+    """Storage for all found framework wrappers.
+    Framework wrapper is represented by a FrameworkWrapper subclass located in
+    a separate module (openvino.py, tensorflow.py etc) inside frameworks package.
     """
 
     def __init__(self):
