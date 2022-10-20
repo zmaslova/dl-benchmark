@@ -141,7 +141,7 @@ class Dataset:
         return True if parameter is not None else False
 
 
-class Parameters:
+class FrameworkParameters:
     @staticmethod
     def _parameter_not_is_none(parameter):
         return True if parameter is not None else False
@@ -160,7 +160,7 @@ class Parameters:
         return True
 
 
-class FrameworkIndependentParameters(Parameters):
+class FrameworkIndependentParameters(FrameworkParameters):
     def __init__(self, inference_framework, batch_size, device, iterarion_count, test_time_limit):
         self.inference_framework = None
         self.batch_size = None

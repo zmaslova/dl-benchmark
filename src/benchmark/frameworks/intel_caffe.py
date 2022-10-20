@@ -1,6 +1,6 @@
 import os
 
-from config_parser import DependentParametersParser, Parameters, Test
+from config_parser import DependentParametersParser, FrameworkParameters, Test
 from framework_wrapper import FrameworkWrapper
 from processes import ProcessHandler
 
@@ -133,7 +133,7 @@ class IntelCaffeParametersParser(DependentParametersParser):
         )
 
 
-class IntelCaffeParameters(Parameters):
+class IntelCaffeParameters(FrameworkParameters):
     def __init__(self, channel_swap, mean, input_scale, thread_count, kmp_affinity):
         self.channel_swap = None
         self.mean = None

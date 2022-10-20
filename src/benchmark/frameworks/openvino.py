@@ -3,7 +3,7 @@ import re
 from abc import ABC
 from collections import OrderedDict
 
-from config_parser import DependentParametersParser, Parameters, Test
+from config_parser import DependentParametersParser, FrameworkParameters, Test
 from framework_wrapper import FrameworkWrapper
 from processes import ProcessHandler
 
@@ -297,7 +297,7 @@ class OpenVINOParametersParser(DependentParametersParser):
         )
 
 
-class OpenVINOParameters(Parameters):
+class OpenVINOParameters(FrameworkParameters):
     def __init__(self, mode, extension, async_request_count, thread_count, stream_count):
         self.mode = None
         self.extension = None
