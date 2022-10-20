@@ -21,7 +21,6 @@ using ns = std::chrono::nanoseconds;
 
 enum class DataPrecision : unsigned int {
     FP32 = 0,
-    FP11,
     FP16,
     U8,
     S8,
@@ -33,7 +32,7 @@ enum class DataPrecision : unsigned int {
     UNKNOWN
 };
 
-const std::map<ONNXTensorElementDataType, DataPrecision> onnx_dtype_to_precision_map = {
+static const std::map<ONNXTensorElementDataType, DataPrecision> onnx_dtype_to_precision_map = {
     {ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT, DataPrecision::FP32},
     {ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT16, DataPrecision::FP16},
     {ONNX_TENSOR_ELEMENT_DATA_TYPE_UINT8, DataPrecision::U8},
@@ -46,7 +45,6 @@ const std::map<ONNXTensorElementDataType, DataPrecision> onnx_dtype_to_precision
 static const std::map<std::string, DataPrecision> precision_to_str_map = {
     {"FP32", DataPrecision::FP32},
     {"FP16", DataPrecision::FP16},
-    {"FP11", DataPrecision::FP11},
     {"U8", DataPrecision::U8},
     {"S8", DataPrecision::S8},
     {"S16", DataPrecision::S16},

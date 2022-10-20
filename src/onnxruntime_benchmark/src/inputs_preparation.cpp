@@ -203,9 +203,7 @@ Ort::Value get_random_tensor(const InputDescr &input_descr) {
     throw std::invalid_argument("Unsuported tensor precision: " + get_precision_str(precision));
 }
 
-std::vector<std::vector<Ort::Value>> get_input_tensors(const InputsInfo &inputs_info,
-                                                       int batch_size,
-                                                       int tensors_num) { // inputs_info.begin()->second.batch;
+std::vector<std::vector<Ort::Value>> get_input_tensors(const InputsInfo &inputs_info, int batch_size, int tensors_num) {
     std::vector<std::vector<Ort::Value>> tensors(tensors_num);
     int start_file_index = 0;
     for (int i = 0; i < tensors_num; ++i) {
@@ -298,14 +296,12 @@ InputsInfo get_inputs_info(const std::map<std::string, std::vector<std::string>>
             if (input_shapes.count(name) > 0) {
                 shape = input_shapes.at(name);
             }
-            else if (input_shapes.count("") > 0 &&
-                     input_shapes.size() == 1) { // handle case without specifying name (one shape for one input, or one
-                                                 // shape for many inputs)
+            else if (input_shapes.count("") > 0 && input_shapes.size() == 1) { // handle case without specifying name
                 shape = input_shapes.at("");
             }
             else if (input_shapes.size() > 1) {
                 throw std::invalid_argument("Input name " + name +
-                                            " not found in the names provided with -shapes argument.");
+                                            " not found in the names provided with -shape argument.");
             }
         }
         else if (!is_dynamic_batch) {

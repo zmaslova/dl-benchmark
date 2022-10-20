@@ -1,6 +1,7 @@
 #include "args_handler.hpp"
 #include "inputs_preparation.hpp"
 #include "onnxruntime_model.hpp"
+#include "report.hpp"
 #include "statistics.hpp"
 #include "utils.hpp"
 
@@ -59,8 +60,8 @@ DEFINE_uint32(t, 0, time_msg);
 constexpr char save_report_msg[] = "save report in JSON format.";
 DEFINE_bool(save_report, false, save_report_msg);
 
-constexpr char report_folder_msg[] = "destination folder for report.";
-DEFINE_string(report_folder, "", report_folder_msg);
+constexpr char report_path_msg[] = "destination path for report.";
+DEFINE_string(report_path, "", report_path_msg);
 
 void parse(int argc, char *argv[]) {
     gflags::ParseCommandLineFlags(&argc, &argv, false);
@@ -81,7 +82,7 @@ void parse(int argc, char *argv[]) {
                   << "\n\t[-niter <NUMBER>]                            " << iterations_num_msg
                   << "\n\t[-t <NUMBER>]                                " << time_msg
                   << "\n\t[-save_report]                               " << save_report_msg
-                  << "\n\t[-report_folder <PATH>]                      " << report_folder_msg << "\n";
+                  << "\n\t[-report_path <PATH>]                      " << report_path_msg << "\n";
         exit(0);
     }
     if (FLAGS_m.empty()) {
@@ -89,7 +90,7 @@ void parse(int argc, char *argv[]) {
     }
 }
 
-static void log_step(const std::string optional_info = "") {
+void log_step(const std::string optional_info = "") {
     static size_t step_id = 0;
     static const std::map<size_t, std::string> steps = {{1, "Parsing and validating input arguments"},
                                                         {2, "Loading ONNX Runtime"},
@@ -124,21 +125,31 @@ void catcher() noexcept {
     }
     std::abort();
 }
-
 } // namespace
 
 int main(int argc, char *argv[]) {
     std::set_terminate(catcher);
+    std::shared_ptr<Report> report;
+
     log_step();
     logger::info << "Parsing input arguments" << logger::endl;
     parse(argc, argv);
-
     logger::info << "Checking input files" << logger::endl;
     std::vector<gflags::CommandLineFlagInfo> flags;
     gflags::GetAllFlags(&flags);
+    if (FLAGS_save_report) {
+        report = std::make_shared<Report>(FLAGS_report_path);
+        for (auto &flag : flags) {
+            if (!flag.is_default) {
+                report->add_record(Report::Category::CMD_OPTIONS, {{flag.name, flag.current_value}});
+            }
+        }
+    }
     auto input_files = parse_input_files_arguments(gflags::GetArgvs());
+
     log_step();
     logger::info << "ONNX Runtime version: " << OrtGetApiBase()->GetVersionString() << logger::endl;
+
     log_step();
     ONNXModel model(FLAGS_nthreads);
     logger::info << "Reading model " << FLAGS_m << logger::endl;
@@ -146,15 +157,18 @@ int main(int argc, char *argv[]) {
     model.read_model(FLAGS_m);
     auto read_model_time = ns_to_ms(HighresClock::now() - start_time);
     logger::info << "Read model took " << format_double(read_model_time) << " ms" << logger::endl;
-    logger::info << "Model inputs/outputs info" << logger::endl;
+    logger::info << "Model inputs/outputs info:" << logger::endl;
     model.fill_inputs_outputs_info();
     auto io_tensors_info = model.get_io_tensors_info();
     log_model_inputs_outputs(io_tensors_info);
+    std::string target_device = "CPU"; // will be used for ov provider
+    logger::info << "Device: " << target_device << logger::endl;
+    logger::info << "\tThreads number: " << (FLAGS_nthreads ? std::to_string(FLAGS_nthreads) : "DEFAULT")
+                 << logger::endl;
 
     log_step();
     auto inputs_info =
         get_inputs_info(input_files, io_tensors_info.first, FLAGS_layout, FLAGS_shape, FLAGS_mean, FLAGS_scale);
-
     // determine batch size
     int batch_size = get_batch_size(inputs_info);
     if (batch_size == -1 && FLAGS_b > 0) {
@@ -166,7 +180,6 @@ int main(int argc, char *argv[]) {
     else if (FLAGS_b > 0) {
         throw std::logic_error("Can't set batch for model with static batch dimension.");
     }
-
     // setting batch
     set_batch_size(inputs_info, batch_size);
     logger::info << "Set batch to " << batch_size << logger::endl;
@@ -177,7 +190,6 @@ int main(int argc, char *argv[]) {
     if (FLAGS_ntensors == 0) {
         num_tensors = 1;
     }
-
     // set and align iterations limit
     int64_t num_iterations = FLAGS_niter;
     if (num_iterations > 0) {
@@ -187,7 +199,6 @@ int main(int argc, char *argv[]) {
                          << " to be aligned with number of tensors " << num_tensors << logger::endl;
         }
     }
-
     // set time limit
     uint32_t time_limit_sec = 0;
     if (FLAGS_t != 0) {
@@ -198,6 +209,16 @@ int main(int argc, char *argv[]) {
         logger::warn << "Default time limit is set: " << time_limit_sec << " seconds " << logger::endl;
     }
     uint64_t time_limit_ns = sec_to_ns(time_limit_sec);
+    if (report) {
+        report->add_record(Report::Category::CONFIGURATION_SETUP,
+                           {{"batch_size", std::to_string(batch_size)},
+                            {"duration", std::to_string(sec_to_ms(time_limit_sec))},
+                            {"iterations_num", std::to_string(num_iterations)},
+                            {"tensors_num", std::to_string(num_tensors)},
+                            {"provider", "ORTDefault"},
+                            {"target_device", "CPU"},
+                            {"precision", get_precision_str(get_data_precision(io_tensors_info.first[0].type))}});
+    }
 
     log_step();
     auto tensors = get_input_tensors(inputs_info, batch_size, num_tensors);
@@ -205,7 +226,8 @@ int main(int argc, char *argv[]) {
     log_step();
     // warm up before benhcmarking
     model.run(tensors[0]);
-    logger::info << "Warming up inference took " << format_double(model.get_latencies()[0]) << " ms" << logger::endl;
+    auto first_inference_time = model.get_latencies()[0];
+    logger::info << "Warming up inference took " << format_double(first_inference_time) << " ms" << logger::endl;
     model.reset_timers();
 
     int64_t iteration = 0;
@@ -221,7 +243,6 @@ int main(int argc, char *argv[]) {
     log_step();
     Metrics metrics(model.get_latencies(), batch_size);
     double total_time = model.get_total_time_ms();
-
     // Performance metrics report
     logger::info << "Count: " << iteration << " iterations" << logger::endl;
     logger::info << "Duration: " << format_double(total_time) << " ms" << logger::endl;
@@ -232,5 +253,18 @@ int main(int argc, char *argv[]) {
     logger::info << "\tMax:     " << format_double(metrics.latency.max) << " ms" << logger::endl;
     logger::info << "Throughput: " << format_double(metrics.fps) << " FPS" << logger::endl;
 
+    if (report) {
+        report->add_record(Report::Category::EXECUTION_RESULTS,
+                           {{"execution_time", format_double(total_time)},
+                            {"first_inference_time", format_double(first_inference_time)},
+                            {"iterations_num", std::to_string(iteration)},
+                            {"latency_avg", format_double(metrics.latency.avg)},
+                            {"latency_max", format_double(metrics.latency.max)},
+                            {"latency_median", format_double(metrics.latency.median)},
+                            {"latency_min", format_double(metrics.latency.min)},
+                            {"read_network_time", format_double(read_model_time)},
+                            {"throughput", format_double(metrics.fps)}});
+        report->save();
+    }
     return 0;
 }
