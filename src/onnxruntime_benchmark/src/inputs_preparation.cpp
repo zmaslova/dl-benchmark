@@ -4,11 +4,12 @@
 #include "logger.hpp"
 #include "utils.hpp"
 
-#include <onnxruntime_cxx_api.h>
 #include <opencv2/core.hpp>
 #include <opencv2/highgui.hpp>
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
+
+#include <onnxruntime_cxx_api.h>
 
 #include <fstream>
 #include <limits>
@@ -59,7 +60,7 @@ template <class T, class T2>
 Ort::Value create_random_tensor(const InputDescr &input_descr,
                                 T rand_min = std::numeric_limits<uint8_t>::min(),
                                 T rand_max = std::numeric_limits<uint8_t>::max()) {
-    logger::info << "\trandom tensor" << logger::endl;
+    logger::info << "\tRandomly generated data" << logger::endl;
     auto tensor_descr = input_descr.tensor_descr;
 
     auto allocator = Ort::AllocatorWithDefaultOptions();
@@ -214,7 +215,7 @@ std::vector<std::vector<Ort::Value>> get_input_tensors(const InputsInfo &inputs_
                          << get_precision_str(get_data_precision(tensor_descr.type)) << " "
                          << shape_string(tensor_descr.shape) << ")" << logger::endl;
 
-            if (static_cast<int>(input_descr.files.size()) < batch_size) {
+            if (!input_descr.files.empty() && static_cast<int>(input_descr.files.size()) < batch_size) {
                 logger::warn << "\tNumber of input files is less than batch size. Some files will be duplicated."
                              << logger::endl;
             }

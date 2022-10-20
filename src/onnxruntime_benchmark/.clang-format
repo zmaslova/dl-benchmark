@@ -44,7 +44,7 @@ IncludeCategories:
   - Regex:           '"([A-Za-z0-9.\/-_])+"'
     Priority:        1
   # 3rd party headers with extension
-  - Regex:           '<onnxruntime_cxx_api.h>'
+  - Regex:           '<onnxruntime*.h>'
     Priority:        3
   - Regex:           '<(gflags|opencv2|nlohmann)\/([A-Za-z0-9.\/-_])+>'
     Priority:        3

@@ -2,8 +2,9 @@
 #include "logger.hpp"
 #include "utils.hpp"
 
-#include <onnxruntime_cxx_api.h>
 #include <opencv2/core/mat.hpp>
+
+#include <onnxruntime_cxx_api.h>
 
 #include <chrono>
 #include <cstdint>
@@ -51,21 +52,21 @@ private:
     std::shared_ptr<Ort::Env> env;
     std::shared_ptr<Ort::Session> session;
 
-    // general time measurments;
+    // time stamps for total time measurments;
     HighresClock::time_point total_start_time;
     HighresClock::time_point total_end_time;
 
-    // time measuremnt for one inference
+    // time stamps for individual inference
     HighresClock::time_point infer_start_time;
     std::vector<double> latencies;
 
 public:
     ONNXModel(int nthreads);
     void fill_inputs_outputs_info();
-    void reset_timers();
-    std::vector<double> get_latencies();
-    double get_total_time_ms();
-    void read_model(const std::string &model);
     IOTensorsInfo get_io_tensors_info() const;
+    std::vector<double> get_latencies();
+    double get_total_time_ms() const;
+    void read_model(const std::string &model);
+    void reset_timers();
     void run(const std::vector<Ort::Value> &input_tensors);
 };

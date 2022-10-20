@@ -4,8 +4,9 @@
 #include "logger.hpp"
 #include "utils.hpp"
 
-#include <onnxruntime_cxx_api.h>
 #include <opencv2/core/mat.hpp>
+
+#include <onnxruntime_cxx_api.h>
 
 #include <algorithm>
 #include <chrono>
@@ -154,7 +155,7 @@ std::vector<double> ONNXModel::get_latencies() {
     return latencies;
 }
 
-double ONNXModel::get_total_time_ms() {
+double ONNXModel::get_total_time_ms() const {
     return ns_to_ms(total_end_time - total_start_time);
 }
 

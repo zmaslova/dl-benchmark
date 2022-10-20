@@ -1,7 +1,20 @@
 cmake_minimum_required(VERSION 3.13)
 project(onnxruntime_benchmark)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 
 find_package(OpenCV REQUIRED core highgui videoio imgproc imgcodecs)
+
+set(ORT_INSTALL_DIR $ENV{ORT_INSTALL_DIR})
+if (ORT_INSTALL_DIR)
+    find_library(ORT_LIBRARIES onnxruntime
+        ${ORT_INSTALL_DIR}/lib
+        CMAKE_FIND_ROOT_PATH_BOTH)
+    find_path(ORT_INCLUDE onnxruntime_cxx_api.h
+        ${ORT_INSTALL_DIR}/include/onnxruntime/core/session
+        CMAKE_FIND_ROOT_PATH_BOTH)
+else()
+    message(FATAL_ERROR "Could not find ONNX Runtime install directory")
+endif()
 
 add_subdirectory(thirdparty/gflags)
 add_subdirectory(thirdparty/nlohmann_json)
@@ -11,10 +24,9 @@ file(GLOB headers "${CMAKE_CURRENT_SOURCE_DIR}/include/*.h*")
 
 add_executable(${PROJECT_NAME} ${sources} ${headers})
 
-target_include_directories(${PROJECT_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/include" "${ONNXRuntime_DIR}/include"
-    "${ONNXRuntime_DIR}/include/onnxruntime/core/session")
+target_include_directories(${PROJECT_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/include" ${ORT_INCLUDE})
 
 message(STATUS ${OpenCV_LIBRARIES})
-target_link_libraries(${PROJECT_NAME} PRIVATE gflags nlohmann_json::nlohmann_json ${OpenCV_LIBRARIES} "${ONNXRuntime_DIR}/build/libonnxruntime.so")
+target_link_libraries(${PROJECT_NAME} PRIVATE gflags nlohmann_json::nlohmann_json ${OpenCV_LIBRARIES} ${ORT_LIBRARIES})
 
 set_target_properties(${PROJECT_NAME} PROPERTIES CXX_STANDARD 17 LINKER_LANGUAGE CXX)

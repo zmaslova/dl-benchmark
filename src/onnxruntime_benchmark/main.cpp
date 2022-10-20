@@ -6,6 +6,8 @@
 #include "utils.hpp"
 
 #include <gflags/gflags.h>
+
+#include <onnxruntime_c_api.h>
 #include <onnxruntime_cxx_api.h>
 
 #include <chrono>
@@ -21,16 +23,22 @@ constexpr char model_msg[] = "path to an .onnx file with a trained model";
 DEFINE_string(m, "", model_msg);
 
 constexpr char input_msg[] =
-    "path to an input to process. The input must be an image and/or binaries, a folder of images and/or binaries";
+    "path to an input to process. The input must be an image and/or binaries, a folder of images and/or binaries.\n"
+    "                                                     Ex, \"input1:file1 input2:file2 input3:file3\" or just path "
+    "to the file or folder if model has one input";
 DEFINE_string(i, "", input_msg);
 
 constexpr char batch_size_msg[] = "batch size value. If not provided, batch size value is determined from the model";
 DEFINE_uint32(b, 0, batch_size_msg);
 
-constexpr char shape_msg[] = "shape for network input";
+constexpr char shape_msg[] = "shape for network input.\n"
+                             "                                                     Ex., "
+                             "\"input1[1,128],input2[1,128],input3[1,128]\" or just \"[1,3,224,224]\"";
 DEFINE_string(shape, "", shape_msg);
-//
-constexpr char layout_msg[] = "layout for network input";
+
+constexpr char layout_msg[] =
+    "layout for network input.\n"
+    "                                                     Ex., \"input1[NCHW],input2[NC]\" or just \"[NCHW]\"";
 DEFINE_string(layout, "", layout_msg);
 
 constexpr char input_mean_msg[] =
@@ -45,13 +53,13 @@ constexpr char input_scale_msg[] =
     "                                                     Example: -scale 58.395 57.12 57.375";
 DEFINE_string(scale, "", input_scale_msg);
 
-constexpr char threads_num_msg[] = "number of threads.";
+constexpr char threads_num_msg[] = "number of threads to utilize.";
 DEFINE_uint32(nthreads, 0, threads_num_msg);
 
-constexpr char tensors_num_msg[] = "number of input tensors to inference. If not provided, default value is set";
-DEFINE_uint32(ntensors, 0, tensors_num_msg);
+constexpr char requests_num_msg[] = "number of inference requests. If not provided, default value is set.";
+DEFINE_uint32(nireq, 0, requests_num_msg);
 
-constexpr char iterations_num_msg[] = "number of iterations. If not provided, default time limit is set";
+constexpr char iterations_num_msg[] = "number of iterations. If not provided, default time limit is set.";
 DEFINE_uint32(niter, 0, iterations_num_msg);
 
 constexpr char time_msg[] = "time limit for inference in seconds";
@@ -78,11 +86,11 @@ void parse(int argc, char *argv[]) {
                   << "\n\t[-mean <R G B>]                              " << input_mean_msg
                   << "\n\t[-scale <R G B>]                             " << input_scale_msg
                   << "\n\t[-nthreads <NUMBER>]                         " << threads_num_msg
-                  << "\n\t[-ntensors <NUMBER>]                          " << tensors_num_msg
+                  << "\n\t[-nireq <NUMBER>]                            " << requests_num_msg
                   << "\n\t[-niter <NUMBER>]                            " << iterations_num_msg
                   << "\n\t[-t <NUMBER>]                                " << time_msg
                   << "\n\t[-save_report]                               " << save_report_msg
-                  << "\n\t[-report_path <PATH>]                      " << report_path_msg << "\n";
+                  << "\n\t[-report_path <PATH>]                        " << report_path_msg << "\n";
         exit(0);
     }
     if (FLAGS_m.empty()) {
@@ -185,18 +193,18 @@ int main(int argc, char *argv[]) {
     logger::info << "Set batch to " << batch_size << logger::endl;
 
     log_step();
-    // number of input tensors to infer (analogue of infer requests from benchmark_app)
-    int num_tensors = FLAGS_ntensors;
-    if (FLAGS_ntensors == 0) {
-        num_tensors = 1;
+    // number of inference requests
+    int num_requests = FLAGS_nireq;
+    if (FLAGS_nireq == 0) {
+        num_requests = 1;
     }
     // set and align iterations limit
     int64_t num_iterations = FLAGS_niter;
     if (num_iterations > 0) {
-        num_iterations = ((num_iterations + num_tensors - 1) / num_tensors) * num_tensors;
+        num_iterations = ((num_iterations + num_requests - 1) / num_requests) * num_requests;
         if (FLAGS_niter != num_iterations) {
             logger::warn << "Provided number of iterations " << FLAGS_niter << " was changed to " << num_iterations
-                         << " to be aligned with number of tensors " << num_tensors << logger::endl;
+                         << " to be aligned with number of inference requests " << num_requests << logger::endl;
         }
     }
     // set time limit
@@ -214,14 +222,14 @@ int main(int argc, char *argv[]) {
                            {{"batch_size", std::to_string(batch_size)},
                             {"duration", std::to_string(sec_to_ms(time_limit_sec))},
                             {"iterations_num", std::to_string(num_iterations)},
-                            {"tensors_num", std::to_string(num_tensors)},
+                            {"tensors_num", std::to_string(num_requests)},
                             {"provider", "ORTDefault"},
                             {"target_device", "CPU"},
                             {"precision", get_precision_str(get_data_precision(io_tensors_info.first[0].type))}});
     }
 
     log_step();
-    auto tensors = get_input_tensors(inputs_info, batch_size, num_tensors);
+    auto tensors = get_input_tensors(inputs_info, batch_size, num_requests);
 
     log_step();
     // warm up before benhcmarking
