@@ -1,5 +1,5 @@
 # ONNX Runtime Benchmark
-The tool allows to measuere deep learning models inference with [ONNX Runtime](https://github.com/microsoft/onnxruntime). This implementation uses [OpenVINO Benchmark C++ tool](https://github.com/openvinotoolkit/openvino/tree/master/samples/cpp/benchmark_app) as a reference and stick to its testing methodology, thus performance results comparison of both tools is valid.
+The tool allows to measure deep learning models inference performance with [ONNX Runtime](https://github.com/microsoft/onnxruntime). This implementation uses [OpenVINO Benchmark C++ tool](https://github.com/openvinotoolkit/openvino/tree/master/samples/cpp/benchmark_app) as a reference and stick to its testing methodology, thus performance results comparison of both tools is valid.
 ## Prerequisites
 The tool was tested on Ubuntu 20.04 (64-bit) with default GCC* 9.4.0
 1. CMake 3.13 or higher
@@ -13,7 +13,7 @@ cd onnxruntime
 git checkout v1.12.1
 git submodule update --init --recursive
 ```
-2. Configure it with `cmake`
+2. Configure it with `cmake`:
 ```
 cmake -DCMAKE_INSTALL_PREFIX=install -DCMAKE_BUILD_TYPE=Release -Donnxruntime_BUILD_FOR_NATIVE_MACHINE=ON -Donnxruntime_BUILD_UNIT_TESTS=OFF -Donnxruntime_USE_AUTOML=OFF -Donnxruntime_BUILD_SHARED_LIB=ON -Donnxruntime_USE_FULL_PROTOBUF=ON -Donnxruntime_USE_OPENMP=ON ../cmake
 ```
@@ -118,7 +118,7 @@ Below is a sample output of the tool from the terminal:
 [Step 1/8] Parsing and validating input arguments
 [ INFO ] Parsing input arguments
 [ INFO ] Checking input files
-[ WARNING ]  Too much files to process. The number of files is limited to 20
+[ WARNING ] Too many files to process. The number of files is limited to 20
 [ INFO ]        ../../../test_data/ILSVRC2012_val_00000001.JPEG
 [ INFO ]        ../../../test_data/ILSVRC2012_val_00000002.JPEG
 [ INFO ]        ../../../test_data/ILSVRC2012_val_00000003.JPEG
@@ -143,7 +143,7 @@ Below is a sample output of the tool from the terminal:
 [ INFO ] ONNX Runtime version: 1.12.1
 [Step 3/8] Reading model files
 [ INFO ] Reading model /home/ivikhrev/dev/models/public/resnet-50-pytorch/resnet-v1-50.onnx
-[ INFO ] Read model took 245.55 ms
+[ INFO ] Read model took 221.03 ms
 [ INFO ] Model inputs/outputs info:
 [ INFO ] Model inputs:
 [ INFO ]        data: FP32 [1,3,224,224]
@@ -152,11 +152,10 @@ Below is a sample output of the tool from the terminal:
 [ INFO ] Device: CPU
 [ INFO ]        Threads number: DEFAULT
 [Step 4/8] Configuring input of the model
-[ WARNING ] Model inputs are static, -shape option will be ignored!
 [ WARNING ] Layout will be detected automatically, as it wasn't provided explicitly.
 [ INFO ] Set batch to 1
 [Step 5/8] Setting execution parameters
-[ WARNING ] Default time limit is set: 60 seconds
+[ INFO ] Default time limit is set: 60 seconds
 [Step 6/8] Creating input tensors
 [ INFO ] Input config 0
 [ INFO ]        data (NCHW FP32 [1,3,224,224])
@@ -167,17 +166,17 @@ Below is a sample output of the tool from the terminal:
 [ INFO ] Input config 2
 [ INFO ]        data (NCHW FP32 [1,3,224,224])
 [ INFO ]                ../../../test_data/ILSVRC2012_val_00000003.JPEG
-[Step 7/8] Measuring model performance
-[ INFO ] Warming up inference took 48.91 ms
+[Step 7/8] Measuring model performance (3 inference requests, limits: 60000 ms)
+[ INFO ] Warming up inference took 45.46 ms
 [Step 8/8] Saving statistics report
-[ INFO ] Count: 1651 iterations
-[ INFO ] Duration: 60026.66 ms
+[ INFO ] Count: 1862 iterations
+[ INFO ] Duration: 60002.58 ms
 [ INFO ] Latency:
-[ INFO ]        Median   36.64 ms
-[ INFO ]        Average: 36.35 ms
-[ INFO ]        Min:     19.97 ms
-[ INFO ]        Max:     93.89 ms
-[ INFO ] Throughput: 27.30 FPS
+[ INFO ]        Median   34.41 ms
+[ INFO ]        Average: 32.22 ms
+[ INFO ]        Min:     19.70 ms
+[ INFO ]        Max:     84.00 ms
+[ INFO ] Throughput: 29.06 FPS
 ```
 
 

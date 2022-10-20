@@ -131,7 +131,7 @@ std::map<std::string, std::vector<std::string>> parse_input_files_arguments(cons
             logger::info << "For input " << input_name << " " << files.size() << " files were added:" << logger::endl;
         }
         if (files.size() > max_files) {
-            logger::warn << " Too much files to process. The number of files is limited to " << max_files << ""
+            logger::warn << "Too many files to process. The number of files is limited to " << max_files << ""
                          << logger::endl;
             files.resize(max_files);
         }

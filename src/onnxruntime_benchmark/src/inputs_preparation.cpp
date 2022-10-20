@@ -25,20 +25,10 @@ using UniformDistribution = typename std::conditional<
     std::uniform_real_distribution<T>,
     typename std::conditional<std::is_integral<T>::value, std::uniform_int_distribution<T>, void>::type>::type;
 
-cv::Mat centerSquareCrop(const cv::Mat &image) {
-    if (image.cols >= image.rows) {
-        return image(cv::Rect((image.cols - image.rows) / 2, 0, image.rows, image.rows));
-    }
-    return image(cv::Rect(0, (image.rows - image.cols) / 2, image.cols, image.cols));
-}
-
 cv::Mat read_image(const std::string &img_path, size_t height, size_t width) {
     auto img = cv::imread(img_path);
-    cv::Mat resized_image = centerSquareCrop(img);
-    cv::resize(resized_image, resized_image, cv::Size(width, height));
-    cv::cvtColor(resized_image, resized_image,
-                 cv::ColorConversionCodes::COLOR_BGR2RGB); // ?
-    return resized_image;
+    cv::resize(img, img, cv::Size(width, height));
+    return img;
 }
 
 template <typename T>
@@ -305,7 +295,7 @@ InputsInfo get_inputs_info(const std::map<std::string, std::vector<std::string>>
                                             " not found in the names provided with -shape argument.");
             }
         }
-        else if (!is_dynamic_batch) {
+        else if (!input_shapes.empty() && !is_dynamic_batch) {
             logger::warn << "Model inputs are static, -shape option will be ignored!" << logger::endl;
         }
 

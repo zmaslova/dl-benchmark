@@ -126,25 +126,6 @@ IOTensorsInfo ONNXModel::get_io_tensors_info() const {
     return {input_tensors_info, output_tensors_info};
 }
 
-void check_output(const std::vector<Ort::Value> &output_tensors, int batch_size) {
-    for (size_t i = 0; i < output_tensors.size(); ++i) {
-        logger::debug << "Output tensor #" << i << logger::endl;
-        const float *floatarr = output_tensors[i].GetTensorData<float>();
-        for (int b = 0; b < batch_size; ++b) {
-            logger::debug << "Batch #" << b << logger::endl;
-            std::vector<float> res(floatarr + b * 1000, floatarr + b * 1000 + 1000);
-            std::vector<int> idx(1000);
-            std::iota(idx.begin(), idx.end(), 0);
-            std::partial_sort(idx.begin(), idx.begin() + 5, idx.end(), [&res](int l, int r) {
-                return res[l] > res[r];
-            });
-            for (size_t j = 0; j < 5; ++j) {
-                logger::debug << "id: " << idx[j] << " score " << res[idx[j]] << logger::endl;
-            }
-        }
-    }
-}
-
 void ONNXModel::reset_timers() {
     total_start_time = HighresClock::time_point::max();
     total_end_time = HighresClock::time_point::min();
@@ -172,5 +153,4 @@ void ONNXModel::run(const std::vector<Ort::Value> &input_tensors) {
     latencies.push_back(ns_to_ms(HighresClock::now() - infer_start_time));
 
     total_end_time = std::max(HighresClock::now(), total_end_time);
-    // check_output(output_tensors, 3);
 }

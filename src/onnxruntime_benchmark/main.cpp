@@ -214,7 +214,7 @@ int main(int argc, char *argv[]) {
     }
     else if (FLAGS_niter == 0) {
         time_limit_sec = 60;
-        logger::warn << "Default time limit is set: " << time_limit_sec << " seconds " << logger::endl;
+        logger::info << "Default time limit is set: " << time_limit_sec << " seconds " << logger::endl;
     }
     uint64_t time_limit_ns = sec_to_ns(time_limit_sec);
     if (report) {
@@ -231,7 +231,16 @@ int main(int argc, char *argv[]) {
     log_step();
     auto tensors = get_input_tensors(inputs_info, batch_size, num_requests);
 
-    log_step();
+
+    std::stringstream ss;
+    ss << num_requests << " inference requests, limits: ";
+    if (time_limit_sec > 0) {
+        ss << sec_to_ms(time_limit_sec) << " ms";
+    }
+    if (num_iterations > 0) {
+        ss << num_iterations << " iterations";
+    }
+    log_step(ss.str());
     // warm up before benhcmarking
     model.run(tensors[0]);
     auto first_inference_time = model.get_latencies()[0];
