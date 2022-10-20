@@ -1,6 +1,6 @@
 import os
 
-from config_parser import DependentParametersParser, ParametersMethods, Test
+from config_parser import DependentParametersParser, Parameters, Test
 from framework_wrapper import FrameworkWrapper
 from processes import ProcessHandler
 
@@ -10,10 +10,10 @@ class IntelCaffeWrapper(FrameworkWrapper):
 
     @staticmethod
     def create_process(test, executor, log, cpp_benchmark_path=None):
-        return IntelCaffeProcess.create_process(test, executor, log, cpp_benchmark_path)
+        return IntelCaffeProcess.create_process(test, executor, log)
 
     @staticmethod
-    def create_test_result(model, dataset, indep_parameters, dep_parameters):
+    def create_test(model, dataset, indep_parameters, dep_parameters):
         return IntelCaffeTest(model, dataset, indep_parameters, dep_parameters)
 
     @staticmethod
@@ -65,7 +65,8 @@ class IntelCaffeProcess(ProcessHandler):
         return average_time, fps, latency
 
     def _fill_command_line(self):
-        path_to_intelcaffe_scrypt = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'inference',
+        path_to_intelcaffe_scrypt = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
+                                                 'inference',
                                                  'inference_caffe.py')
         python = ProcessHandler._get_cmd_python_version()
 
@@ -132,7 +133,7 @@ class IntelCaffeParametersParser(DependentParametersParser):
         )
 
 
-class IntelCaffeParameters(ParametersMethods):
+class IntelCaffeParameters(Parameters):
     def __init__(self, channel_swap, mean, input_scale, thread_count, kmp_affinity):
         self.channel_swap = None
         self.mean = None

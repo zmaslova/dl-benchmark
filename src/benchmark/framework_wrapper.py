@@ -1,7 +1,9 @@
 import importlib
 import inspect
+import logging as log
 import pkgutil
 from abc import ABCMeta, abstractmethod
+
 
 class Singleton(type):
     _instances = {}
@@ -13,6 +15,10 @@ class Singleton(type):
 
 
 class FrameworkWrapper(metaclass=ABCMeta):
+    """Base abstract class for framework wrapper.
+    The framework_name attribute should be initialized in a derived class
+    with framework name string used in configuration file."""
+
     framework_name = ''
 
     def __init_subclass__(cls):
@@ -26,7 +32,7 @@ class FrameworkWrapper(metaclass=ABCMeta):
 
     @staticmethod
     @abstractmethod
-    def create_test_result(model, dataset, indep_parameters, dep_parameters):
+    def create_test(model, dataset, indep_parameters, dep_parameters):
         raise NotImplementedError()
 
     @staticmethod
@@ -35,27 +41,31 @@ class FrameworkWrapper(metaclass=ABCMeta):
         raise NotImplementedError()
 
 
-class FrameworkWrapperManager(metaclass=Singleton):
+class FrameworkWrapperRegistry(metaclass=Singleton):
+    """Storage for all available framework wrappers.
+    A framework wrapper is `FrameworkWrapper` subclass located in a separate module (openvino.py, tensorflow.py etc)
+    inside frameworks/ package
+    """
+
     def __init__(self):
         self._framework_wrappers = {}
         self._find_wrappers('frameworks')
+        log.info(f'Available framework wrappers: {", ".join(self._framework_wrappers.keys())}')
 
     def __getitem__(self, framework_name):
-        from config_parser import Test
-        if isinstance(framework_name, Test):
-            framework_name = framework_name.indep_parameters.inference_framework
-        
+        """Get framework wrapper by framework name"""
         if framework_name in self._framework_wrappers:
             return self._framework_wrappers[framework_name]
         else:
-            raise ValueError(f'Invalid framework name. Supported values: "{", ".join(self._framework_wrappers.keys())}"')
-        
-    def _find_wrappers(self, wrappers_path):
-        wrappers_package = importlib.import_module(wrappers_path)
+            raise ValueError(f'Unsupported framework name: {framework_name}. '
+                             f'Available framework wrappers: {", ".join(self._framework_wrappers.keys())}')
+
+    def _find_wrappers(self, wrappers_pkg_name):
+        """Search framework wrappers inside the specified package"""
+        wrappers_package = importlib.import_module(wrappers_pkg_name)
         for module_info in pkgutil.iter_modules(wrappers_package.__path__):
             if not module_info.ispkg:
-                wrapper = importlib.import_module(f'{wrappers_package.__name__}.{module_info.name}')
-                classes = inspect.getmembers(wrapper, inspect.isclass)
-                for _, type in classes:
-                    if issubclass(type, FrameworkWrapper) and type is not FrameworkWrapper:
-                        self._framework_wrappers[type.framework_name] = type()
+                module = importlib.import_module(f'{wrappers_package.__name__}.{module_info.name}')
+                for _, class_type in inspect.getmembers(module, inspect.isclass):
+                    if issubclass(class_type, FrameworkWrapper) and class_type is not FrameworkWrapper:
+                        self._framework_wrappers[class_type.framework_name] = class_type()

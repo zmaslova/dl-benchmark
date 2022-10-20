@@ -1,8 +1,24 @@
 import os
 
-from config_parser import DependentParametersParser, ParametersMethods, Test
+from config_parser import DependentParametersParser, Parameters, Test
 from framework_wrapper import FrameworkWrapper
 from processes import ProcessHandler
+
+
+class IntelCaffeWrapper(FrameworkWrapper):
+    framework_name = 'TensorFlow'
+
+    @staticmethod
+    def create_process(test, executor, log, cpp_benchmark_path=None):
+        return TensorFlowProcess.create_process(test, executor, log)
+
+    @staticmethod
+    def create_test(model, dataset, indep_parameters, dep_parameters):
+        return TensorFlowTest(model, dataset, indep_parameters, dep_parameters)
+
+    @staticmethod
+    def get_dependent_parameters_parser():
+        return TensorFlowParametersParser()
 
 
 class TensorFlowProcess(ProcessHandler):
@@ -69,7 +85,8 @@ class TensorFlowProcess(ProcessHandler):
         return average_time, fps, latency
 
     def _fill_command_line(self):
-        path_to_tensorflow_scrypt = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'inference',
+        path_to_tensorflow_scrypt = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
+                                                 'inference',
                                                  'inference_tensorflow.py')
         python = ProcessHandler._get_cmd_python_version()
 
@@ -171,7 +188,7 @@ class TensorFlowParametersParser(DependentParametersParser):
         )
 
 
-class TensorFlowParameters(ParametersMethods):
+class TensorFlowParameters(Parameters):
     def __init__(self, channel_swap, mean, input_scale, input_shape, input_name, output_names, thread_count,
                  inter_op_parallelism_threads, intra_op_parallelism_threads, kmp_affinity):
         self.channel_swap = None

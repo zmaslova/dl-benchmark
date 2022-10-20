@@ -3,7 +3,7 @@ import re
 from abc import ABC
 from collections import OrderedDict
 
-from config_parser import DependentParametersParser, ParametersMethods, Test
+from config_parser import DependentParametersParser, Parameters, Test
 from framework_wrapper import FrameworkWrapper
 from processes import ProcessHandler
 
@@ -16,7 +16,7 @@ class OpenVINOWrapper(FrameworkWrapper):
         return OpenVINOProcess.create_process(test, executor, log, cpp_benchmark_path)
 
     @staticmethod
-    def create_test_result(model, dataset, indep_parameters, dep_parameters):
+    def create_test(model, dataset, indep_parameters, dep_parameters):
         return OpenVINOTest(model, dataset, indep_parameters, dep_parameters)
 
     @staticmethod
@@ -297,7 +297,7 @@ class OpenVINOParametersParser(DependentParametersParser):
         )
 
 
-class OpenVINOParameters(ParametersMethods):
+class OpenVINOParameters(Parameters):
     def __init__(self, mode, extension, async_request_count, thread_count, stream_count):
         self.mode = None
         self.extension = None

@@ -1,10 +1,10 @@
 import abc
 from xml.dom import minidom
 
-from framework_wrapper import FrameworkWrapperManager
+from framework_wrapper import FrameworkWrapperRegistry
 
 
-class TestResultParser:
+class TestConfigParser:
     def get_tests_list(self, config):
         CONFIG_ROOT_TAG = 'Test'
         return minidom.parse(config).getElementsByTagName(CONFIG_ROOT_TAG)
@@ -65,7 +65,7 @@ class TestResultParser:
         )
 
     def parse_dependent_parameters(self, curr_test, framework):
-        dep_parser = FrameworkWrapperManager()[framework].get_dependent_parameters_parser()
+        dep_parser = FrameworkWrapperRegistry()[framework].get_dependent_parameters_parser()
         return dep_parser.parse_parameters(curr_test)
 
 
@@ -141,7 +141,7 @@ class Dataset:
         return True if parameter is not None else False
 
 
-class ParametersMethods:
+class Parameters:
     @staticmethod
     def _parameter_not_is_none(parameter):
         return True if parameter is not None else False
@@ -160,7 +160,7 @@ class ParametersMethods:
         return True
 
 
-class FrameworkIndependentParameters(ParametersMethods):
+class FrameworkIndependentParameters(Parameters):
     def __init__(self, inference_framework, batch_size, device, iterarion_count, test_time_limit):
         self.inference_framework = None
         self.batch_size = None
@@ -213,7 +213,7 @@ class Test(metaclass=abc.ABCMeta):
 
 
 def process_config(config, log):
-    test_parser = TestResultParser()
+    test_parser = TestConfigParser()
     test_list = []
 
     tests = test_parser.get_tests_list(config)
@@ -225,8 +225,8 @@ def process_config(config, log):
             framework = indep_parameters.inference_framework
             dep_parameters = test_parser.parse_dependent_parameters(curr_test, framework)
 
-            test_list.append(FrameworkWrapperManager()[framework].create_test_result(model, dataset, indep_parameters,
-                                                                                     dep_parameters))
+            test_list.append(FrameworkWrapperRegistry()[framework].create_test(model, dataset,
+                                                                               indep_parameters, dep_parameters))
         except ValueError as valerr:
             log.warning(f'Test {idx + 1} not added to test list: {valerr}')
     return test_list

@@ -2,7 +2,7 @@ import argparse
 import logging as log
 import os
 import sys
-from framework_wrapper import FrameworkWrapperManager
+from framework_wrapper import FrameworkWrapperRegistry
 
 import config_parser
 from output import OutputHandler
@@ -45,8 +45,9 @@ def cli_argument_parser():
 def inference_benchmark(executor_type, test_list, output_handler, log, cpp_benchmark_path=None):
     process_executor = Executor.get_executor(executor_type, log)
     for test in test_list:
-        test_process = FrameworkWrapperManager()[test].create_process(test, process_executor, log, cpp_benchmark_path)
-        #test_process = ProcessHandler.get_process(test, process_executor, log, cpp_benchmark_path)
+        framework_name = test.indep_parameters.inference_framework
+        test_process = FrameworkWrapperRegistry()[framework_name].create_process(test, process_executor,
+                                                                                 log, cpp_benchmark_path)
         test_process.execute()
 
         log.info('Saving test result in file\n')
