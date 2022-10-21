@@ -5,7 +5,7 @@ from framework_wrapper import FrameworkWrapper
 from processes import ProcessHandler
 
 
-class IntelCaffeWrapper(FrameworkWrapper):
+class TensorFlowWrapper(FrameworkWrapper):
     framework_name = 'TensorFlow'
 
     @staticmethod
