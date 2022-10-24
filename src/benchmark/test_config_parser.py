@@ -1,9 +1,9 @@
 from xml.dom import minidom
 
-from benchmark.config_parser_factory import get_parameters_parser
-from src.benchmark.config_parser.dataset_parser import Dataset
-from src.benchmark.config_parser.framework_independent_parameters import FrameworkIndependentParameters
-from src.benchmark.config_parser.model import Model
+from benchmark.config_parser.dataset_parser import Dataset
+from benchmark.config_parser.framework_independent_parameters import FrameworkIndependentParameters
+from benchmark.config_parser.model import Model
+from .config_parser_factory import get_parameters_parser
 
 
 class TestConfigParser:

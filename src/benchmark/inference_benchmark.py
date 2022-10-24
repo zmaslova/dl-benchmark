@@ -3,10 +3,10 @@ import logging as log
 import os
 import sys
 
-from benchmark.frameworks.framework_wrapper_registry import FrameworkWrapperRegistry
 from config_processor import process_config
-from executors import Executor
-from output import OutputHandler
+from frameworks.framework_wrapper_registry import FrameworkWrapperRegistry
+from .executors import Executor
+from .output import OutputHandler
 
 
 def cli_argument_parser():

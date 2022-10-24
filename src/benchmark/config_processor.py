@@ -1,5 +1,6 @@
-from src.benchmark.config_parser.test_config_parser import TestConfigParser
-from src.benchmark.frameworks.framework_wrapper_registry import FrameworkWrapperRegistry
+from .frameworks.framework_wrapper_registry import FrameworkWrapperRegistry
+from .test_config_parser import TestConfigParser
+
 
 def process_config(config, log):
     test_parser = TestConfigParser()

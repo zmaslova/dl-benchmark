@@ -1,4 +1,4 @@
-from benchmark.config_parser.framework_parameters_parser import FrameworkParameters
+from .framework_parameters_parser import FrameworkParameters
 
 
 class FrameworkIndependentParameters(FrameworkParameters):

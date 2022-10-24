@@ -1,12 +1,16 @@
-import sys
 import logging as log
+import sys
+
 import pytest
 
-from framework_wrapper import FrameworkWrapperRegistry
-from frameworks.openvino import (OpenVINOProcess, SyncOpenVINOProcess, AsyncOpenVINOProcess,
-                                 OpenVINOBenchmarkPythonProcess, OpenVINOBenchmarkCppProcess)
-from frameworks.intel_caffe import IntelCaffeProcess
-from frameworks.tensorflow import TensorFlowProcess
+from src.benchmark.frameworks.framework_wrapper_registry import FrameworkWrapperRegistry
+from src.benchmark.frameworks.intel_caffe.intel_caffe_process import IntelCaffeProcess
+from src.benchmark.frameworks.openvino.openvino_async_process import AsyncOpenVINOProcess
+from src.benchmark.frameworks.openvino.openvino_benchmark_cpp_process import OpenVINOBenchmarkCppProcess
+from src.benchmark.frameworks.openvino.openvino_benchmark_python_process import OpenVINOBenchmarkPythonProcess
+from src.benchmark.frameworks.openvino.openvino_process import OpenVINOProcess
+from src.benchmark.frameworks.openvino.openvino_sync_process import SyncOpenVINOProcess
+from src.benchmark.frameworks.tensorflow.tensorflow_process import TensorFlowProcess
 from src.benchmark.processes import ProcessHandler
 from src.benchmark.tests.test_executor import get_host_executor
 
