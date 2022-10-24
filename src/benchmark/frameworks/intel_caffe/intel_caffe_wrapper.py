@@ -1,6 +1,7 @@
-from benchmark.frameworks.framework_wrapper import FrameworkWrapper
-from benchmark.frameworks.intel_caffe.intel_caffe_process import IntelCaffeProcess
-from benchmark.frameworks.intel_caffe.intel_caffe_test import IntelCaffeTest
+from .intel_caffe_process import IntelCaffeProcess
+from .intel_caffe_test import IntelCaffeTest
+from ..framework_wrapper import FrameworkWrapper
+
 
 class IntelCaffeWrapper(FrameworkWrapper):
     framework_name = 'Caffe'

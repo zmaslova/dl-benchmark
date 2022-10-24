@@ -1,6 +1,6 @@
 import os
 
-from benchmark.frameworks.openvino.openvino_benchmark_process import OpenVINOBenchmarkProcess
+from .openvino_benchmark_process import OpenVINOBenchmarkProcess
 
 
 class OpenVINOBenchmarkCppProcess(OpenVINOBenchmarkProcess):

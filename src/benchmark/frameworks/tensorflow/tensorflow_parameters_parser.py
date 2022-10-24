@@ -1,5 +1,5 @@
-from benchmark.config_parser import DependentParametersParser
-from benchmark.frameworks.tensorflow import TensorFlowParameters
+from .tensorflow_parameters import TensorFlowParameters
+from ..config_parser.dependent_parameters_parser import DependentParametersParser
 
 
 class TensorFlowParametersParser(DependentParametersParser):

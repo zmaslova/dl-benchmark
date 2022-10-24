@@ -1,6 +1,6 @@
 import os
 
-from benchmark.processes import ProcessHandler
+from ..processes import ProcessHandler
 
 
 class IntelCaffeProcess(ProcessHandler):

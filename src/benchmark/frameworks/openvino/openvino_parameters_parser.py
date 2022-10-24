@@ -1,5 +1,5 @@
-from benchmark.config_parser import DependentParametersParser
-from benchmark.frameworks.openvino import OpenVINOParameters
+from .openvino_parameters import OpenVINOParameters
+from ..config_parser.dependent_parameters_parser import DependentParametersParser
 
 
 class OpenVINOParametersParser(DependentParametersParser):

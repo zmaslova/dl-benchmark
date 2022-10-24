@@ -1,7 +1,7 @@
 import os
 
-from benchmark.frameworks.openvino.openvino_python_api_process import OpenVINOPythonAPIProcess
-from benchmark.processes import ProcessHandler
+from .openvino_python_api_process import OpenVINOPythonAPIProcess
+from ..processes import ProcessHandler
 
 
 class AsyncOpenVINOProcess(OpenVINOPythonAPIProcess):

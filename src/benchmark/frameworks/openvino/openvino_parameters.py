@@ -1,6 +1,6 @@
 import os
 
-from benchmark.config_parser import FrameworkParameters
+from ..config_parser.framework_parameters_parser import FrameworkParameters
 
 
 class OpenVINOParameters(FrameworkParameters):

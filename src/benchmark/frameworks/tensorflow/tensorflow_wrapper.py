@@ -1,6 +1,6 @@
-from benchmark.frameworks.framework_wrapper import FrameworkWrapper
-from benchmark.frameworks.tensorflow.tensorflow_process import TensorFlowProcess
-from benchmark.frameworks.tensorflow.tensorflow_test import TensorFlowTest
+from .tensorflow_process import TensorFlowProcess
+from .tensorflow_test import TensorFlowTest
+from ..framework_wrapper import FrameworkWrapper
 
 
 class TensorFlowWrapper(FrameworkWrapper):

@@ -1,4 +1,4 @@
-from benchmark.config_parser.test_reporter import Test
+from ..config_parser.test_reporter import Test
 
 
 class IntelCaffeTest(Test):

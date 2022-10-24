@@ -1,5 +1,5 @@
-from benchmark.config_parser import DependentParametersParser
-from benchmark.frameworks.intel_caffe.intel_caffe_parameters import IntelCaffeParameters
+from .intel_caffe_parameters import IntelCaffeParameters
+from ..config_parser.dependent_parameters_parser import DependentParametersParser
 
 
 class IntelCaffeParametersParser(DependentParametersParser):

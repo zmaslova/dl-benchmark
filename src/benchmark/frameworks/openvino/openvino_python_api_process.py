@@ -1,4 +1,4 @@
-from benchmark.frameworks.openvino.openvino_process import OpenVINOProcess
+from .openvino_process import OpenVINOProcess
 
 
 class OpenVINOPythonAPIProcess(OpenVINOProcess):

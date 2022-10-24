@@ -1,9 +1,9 @@
 import logging as log
 
-from src.benchmark.frameworks.Singleton import Singleton
-from src.benchmark.frameworks.intel_caffe.intel_caffe_wrapper import IntelCaffeWrapper
-from src.benchmark.frameworks.openvino.openvino_wrapper import OpenVINOWrapper
-from src.benchmark.frameworks.tensorflow.tensorflow_wrapper import TensorFlowWrapper
+from .Singleton import Singleton
+from .intel_caffe.intel_caffe_wrapper import IntelCaffeWrapper
+from .openvino.openvino_wrapper import OpenVINOWrapper
+from .tensorflow.tensorflow_wrapper import TensorFlowWrapper
 
 
 class FrameworkWrapperRegistry(metaclass=Singleton):
@@ -14,7 +14,7 @@ class FrameworkWrapperRegistry(metaclass=Singleton):
 
     def __init__(self):
         self._framework_wrappers = {}
-        self._find_wrappers('frameworks')
+        self._find_wrappers()
         log.info(f'Available framework wrappers: {", ".join(self._framework_wrappers.keys())}')
 
     def __getitem__(self, framework_name):

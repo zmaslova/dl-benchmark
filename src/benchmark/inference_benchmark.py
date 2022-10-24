@@ -4,9 +4,9 @@ import os
 import sys
 
 from config_processor import process_config
+from executors import Executor
 from frameworks.framework_wrapper_registry import FrameworkWrapperRegistry
-from .executors import Executor
-from .output import OutputHandler
+from output import OutputHandler
 
 
 def cli_argument_parser():

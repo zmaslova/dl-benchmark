@@ -1,6 +1,6 @@
 from collections import OrderedDict
 
-from benchmark.config_parser.test_reporter import Test
+from ..config_parser.test_reporter import Test
 
 
 class OpenVINOTest(Test):

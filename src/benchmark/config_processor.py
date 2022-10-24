@@ -1,5 +1,5 @@
-from .frameworks.framework_wrapper_registry import FrameworkWrapperRegistry
-from .test_config_parser import TestConfigParser
+from frameworks.framework_wrapper_registry import FrameworkWrapperRegistry
+from test_config_parser import TestConfigParser
 
 
 def process_config(config, log):

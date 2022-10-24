@@ -1,7 +1,7 @@
-from benchmark.frameworks.openvino.openvino_async_process import AsyncOpenVINOProcess
-from benchmark.frameworks.openvino.openvino_benchmark_cpp_process import OpenVINOBenchmarkCppProcess
-from benchmark.frameworks.openvino.openvino_benchmark_python_process import OpenVINOBenchmarkPythonProcess
-from benchmark.frameworks.openvino.openvino_sync_process import SyncOpenVINOProcess
+from .openvino_async_process import AsyncOpenVINOProcess
+from .openvino_benchmark_cpp_process import OpenVINOBenchmarkCppProcess
+from .openvino_benchmark_python_process import OpenVINOBenchmarkPythonProcess
+from .openvino_sync_process import SyncOpenVINOProcess
 
 
 def create_process(test, executor, log, cpp_benchmark_path=None):

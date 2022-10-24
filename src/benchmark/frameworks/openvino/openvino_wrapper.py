@@ -1,6 +1,6 @@
-from benchmark.frameworks.framework_wrapper import FrameworkWrapper
-from benchmark.frameworks.openvino.openvino_process_factory import create_process
-from benchmark.frameworks.openvino.openvino_test import OpenVINOTest
+from .openvino_process_factory import create_process
+from .openvino_test import OpenVINOTest
+from ..framework_wrapper import FrameworkWrapper
 
 
 class OpenVINOWrapper(FrameworkWrapper):

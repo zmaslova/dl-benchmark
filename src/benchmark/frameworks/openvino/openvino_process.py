@@ -1,6 +1,6 @@
 from abc import ABC
 
-from benchmark.processes import ProcessHandler
+from ..processes import ProcessHandler
 
 
 class OpenVINOProcess(ProcessHandler, ABC):
