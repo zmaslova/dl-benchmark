@@ -6,6 +6,7 @@ import pytest
 from benchmark.frameworks.processes import ProcessHandler
 from src.benchmark.frameworks.framework_wrapper_registry import FrameworkWrapperRegistry
 from src.benchmark.frameworks.intel_caffe.intel_caffe_process import IntelCaffeProcess
+from src.benchmark.frameworks.known_frameworks import KnownFrameworks
 from src.benchmark.frameworks.openvino.openvino_async_process import AsyncOpenVINOProcess
 from src.benchmark.frameworks.openvino.openvino_benchmark_cpp_process import OpenVINOBenchmarkCppProcess
 from src.benchmark.frameworks.openvino.openvino_benchmark_python_process import OpenVINOBenchmarkPythonProcess
@@ -69,7 +70,7 @@ def test_framework_wrapper(inference_framework, mode, mocker):
     test.dep_parameters.mode = mode[0]
     wrapper = WRAPPER_REGISTRY[inference_framework[0]]
     mocker.patch('os.path.exists', return_value=True)
-    if inference_framework[0] == 'OpenVINO DLDT':
+    if inference_framework[0] == KnownFrameworks.opevino_dldt:
         assert isinstance(wrapper.create_process(test, None, log, 'valid/benchmark/path'), mode[1])
     else:
         assert isinstance(wrapper.create_process(test, None, log, 'valid/benchmark/path'), inference_framework[1])

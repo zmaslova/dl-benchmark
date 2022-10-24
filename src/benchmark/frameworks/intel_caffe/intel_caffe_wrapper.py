@@ -1,10 +1,11 @@
 from .intel_caffe_process import IntelCaffeProcess
 from .intel_caffe_test import IntelCaffeTest
 from ..framework_wrapper import FrameworkWrapper
+from ..known_frameworks import KnownFrameworks
 
 
 class IntelCaffeWrapper(FrameworkWrapper):
-    framework_name = 'Caffe'
+    framework_name = KnownFrameworks.caffe
 
     @staticmethod
     def create_process(test, executor, log, cpp_benchmark_path=None):

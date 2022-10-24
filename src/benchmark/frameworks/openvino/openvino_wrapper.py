@@ -1,10 +1,11 @@
 from .openvino_process_factory import create_process
 from .openvino_test import OpenVINOTest
 from ..framework_wrapper import FrameworkWrapper
+from ..known_frameworks import KnownFrameworks
 
 
 class OpenVINOWrapper(FrameworkWrapper):
-    framework_name = 'OpenVINO DLDT'
+    framework_name = KnownFrameworks.opevino_dldt
 
     @staticmethod
     def create_process(test, executor, log, cpp_benchmark_path=None):
@@ -14,6 +15,3 @@ class OpenVINOWrapper(FrameworkWrapper):
     def create_test(model, dataset, indep_parameters, dep_parameters):
         return OpenVINOTest(model, dataset, indep_parameters, dep_parameters)
 
-    # @staticmethod
-    # def get_dependent_parameters_parser():
-    #     return OpenVINOParametersParser()
