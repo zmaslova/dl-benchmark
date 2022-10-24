@@ -76,7 +76,7 @@ def test_get_wrong_executor(executor_type, mocker):
 def test_target_framework(executor_instance, mocker):
     ex = executor_instance(mocker)
     ex.set_target_framework(KnownFrameworks.opevino_dldt)
-    assert ex.my_target_framework == KnownFrameworks.opevino_dldt
+    assert ex.my_target_framework == 'OpenVINO_DLDT'
 
 
 @pytest.mark.parametrize('executor_instance', [get_host_executor, get_docker_executor])
