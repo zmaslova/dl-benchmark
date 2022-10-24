@@ -50,7 +50,7 @@ template <class T, class T2>
 Ort::Value create_random_tensor(const InputDescr &input_descr,
                                 T rand_min = std::numeric_limits<uint8_t>::min(),
                                 T rand_max = std::numeric_limits<uint8_t>::max()) {
-    logger::info << "\tRandomly generated data" << logger::endl;
+    logger::info << "\t\tRandomly generated data" << logger::endl;
     auto tensor_descr = input_descr.tensor_descr;
 
     auto allocator = Ort::AllocatorWithDefaultOptions();
@@ -280,7 +280,8 @@ std::vector<std::vector<Ort::Value>> get_input_tensors(const InputsInfo &inputs_
                 logger::warn << "\tNumber of input files is less than batch size. Some files will be duplicated."
                              << logger::endl;
             }
-            if (input_descr.files.empty()) {
+
+            if (input_descr.files.empty() && !tensor_descr.is_image_info()) {
                 tensors[i].push_back(get_random_tensor(input_descr));
             }
             else if (tensor_descr.is_image()) {
