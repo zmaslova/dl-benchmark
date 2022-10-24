@@ -24,10 +24,3 @@ class FrameworkWrapper(metaclass=ABCMeta):
     @abstractmethod
     def create_test(model, dataset, indep_parameters, dep_parameters):
         raise NotImplementedError()
-
-    # @staticmethod
-    # def get_dependent_parameters_parser(cls, curr_test):
-    #     dep_parser = get_parameters_parser(cls.framework_name)
-    #     return dep_parser.parse_parameters(curr_test)
-
-
