@@ -19,6 +19,10 @@ bool ONNXTensorDescr::is_image() const {
     return (layout == "NCHW" || layout == "NHWC" || layout == "CHW" || layout == "HWC") && channels() == 3;
 }
 
+bool ONNXTensorDescr::is_image_info() const {
+    return layout == "NC" && channels() >= 2;
+}
+
 bool ONNXTensorDescr::is_dynamic() const {
     return std::find(shape.begin(), shape.end(), -1) != shape.end();
 }
@@ -111,6 +115,11 @@ void ONNXModel::fill_inputs_outputs_info() {
         auto output_node_shape = tensor_info.GetShape();
         io.output_shapes.push_back(output_node_shape);
     }
+
+    // sort to keep inputs name order with input tensors
+    std::sort(io.input_names.begin(), io.input_names.end(), [](const char *l, const char *r) {
+        return std::string(l) < std::string(r);
+    });
 }
 
 IOTensorsInfo ONNXModel::get_io_tensors_info() const {

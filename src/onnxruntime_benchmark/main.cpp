@@ -218,22 +218,23 @@ int main(int argc, char *argv[]) {
     }
     uint64_t time_limit_ns = utils::sec_to_ns(time_limit_sec);
     if (report) {
-        report->add_record(Report::Category::CONFIGURATION_SETUP,
-                           {{"batch_size", std::to_string(batch_size)},
-                            {"duration", std::to_string(utils::sec_to_ms(time_limit_sec))},
-                            {"iterations_num", std::to_string(num_iterations)},
-                            {"tensors_num", std::to_string(num_requests)},
-                            {"provider", "ORTDefault"},
-                            {"target_device", "CPU"},
-                            {"precision", utils::get_precision_str(utils::get_data_precision(io_tensors_info.first[0].type))}});
+        report->add_record(
+            Report::Category::CONFIGURATION_SETUP,
+            {{"batch_size", std::to_string(batch_size)},
+             {"duration", std::to_string(utils::sec_to_ms(time_limit_sec))},
+             {"iterations_num", std::to_string(num_iterations)},
+             {"tensors_num", std::to_string(num_requests)},
+             {"provider", "ORTDefault"},
+             {"target_device", "CPU"},
+             {"precision", utils::get_precision_str(utils::get_data_precision(io_tensors_info.first[0].type))}});
     }
 
     log_step(); // Creating input tensors
     auto tensors = get_input_tensors(inputs_info, batch_size, num_requests);
 
-    log_step("inference requests, limits: " +
-             (num_iterations > 0 ? std::to_string(num_iterations) + " iterations"
-                                 : std::to_string(utils::sec_to_ms(time_limit_sec)) + " ms")); // Measuring model performance
+    log_step("inference requests, limits: " + (num_iterations > 0 ? std::to_string(num_iterations) + " iterations"
+                                                                  : std::to_string(utils::sec_to_ms(time_limit_sec)) +
+                                                                        " ms")); // Measuring model performance
     // warm up before benhcmarking
     model.run(tensors[0]);
     auto first_inference_time = model.get_latencies()[0];

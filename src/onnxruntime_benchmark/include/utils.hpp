@@ -25,11 +25,9 @@ enum class DataPrecision : unsigned int {
     FP16,
     U8,
     S8,
-    S16,
     S32,
     S64,
     BOOL,
-    MIXED,
     UNKNOWN
 };
 
@@ -48,15 +46,12 @@ static const std::map<std::string, DataPrecision> precision_to_str_map = {
     {"FP16", DataPrecision::FP16},
     {"U8", DataPrecision::U8},
     {"S8", DataPrecision::S8},
-    {"S16", DataPrecision::S16},
     {"S32", DataPrecision::S32},
     {"S64", DataPrecision::S64},
     {"INT8", DataPrecision::S8},
-    {"INT16", DataPrecision::S16},
     {"INT32", DataPrecision::S32},
     {"INT64", DataPrecision::S64},
     {"BOOL", DataPrecision::BOOL},
-    {"MIXED", DataPrecision::MIXED},
 };
 
 DataPrecision get_data_precision(ONNXTensorElementDataType type);

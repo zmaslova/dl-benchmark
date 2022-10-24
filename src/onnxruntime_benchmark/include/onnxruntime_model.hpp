@@ -22,6 +22,7 @@ struct ONNXTensorDescr {
     ONNXTensorElementDataType type;
 
     bool is_image() const;
+    bool is_image_info() const;
     bool is_dynamic() const;
     bool has_batch() const;
     bool is_dynamic_batch() const;
