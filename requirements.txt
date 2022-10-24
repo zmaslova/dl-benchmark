@@ -8,5 +8,3 @@ pandas
 psutil
 xlsxwriter
 iteration_utilities
-pytest
-pytest-mock
