@@ -1,4 +1,5 @@
 import abc
+import os
 import platform
 
 
@@ -9,6 +10,7 @@ class ProcessHandler(metaclass=abc.ABCMeta):
         self._executor = executor
         self._output = None
         self._status = None
+        self.inference_script_root = os.path.normpath(os.path.join(os.path.dirname(__file__), '../../', 'inference'))
 
     @staticmethod
     def _get_cmd_python_version():

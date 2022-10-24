@@ -20,8 +20,7 @@ class SyncOpenVINOProcess(OpenVINOPythonAPIProcess):
         return average_time, fps, latency
 
     def _fill_command_line(self):
-        path_to_sync_scrypt = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'inference',
-                                           'inference_sync_mode.py')
+        path_to_sync_scrypt = os.path.join(self.inference_script_root, 'inference_sync_mode.py')
         python = ProcessHandler._get_cmd_python_version()
 
         common_params = super()._fill_command_line()

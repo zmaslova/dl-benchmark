@@ -76,8 +76,9 @@ def test_framework_wrapper(inference_framework, mode, mocker):
 
 
 def test_get_openvino_benchmark_app_metrics(mocker):
-    mocker.patch('frameworks.openvino.OpenVINOBenchmarkPythonProcess._fill_command_line',
-                 return_value='ls')
+    mocker.patch(
+        'src.benchmark.frameworks.openvino.openvino_benchmark_python_process.OpenVINOBenchmarkPythonProcess._fill_command_line',
+        return_value='ls')
     mocker.patch('src.benchmark.executors.HostExecutor.execute_process',
                  return_value=(0, OPENVINO_BENCHMARK_RESULT_RAW.encode('utf-8')))
     process = OpenVINOBenchmarkPythonProcess(TEST_BASIC_LINE, get_host_executor(mocker), log)

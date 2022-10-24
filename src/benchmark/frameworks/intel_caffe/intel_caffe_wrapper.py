@@ -13,7 +13,3 @@ class IntelCaffeWrapper(FrameworkWrapper):
     @staticmethod
     def create_test(model, dataset, indep_parameters, dep_parameters):
         return IntelCaffeTest(model, dataset, indep_parameters, dep_parameters)
-
-    # @staticmethod
-    # def get_dependent_parameters_parser():
-    #     return IntelCaffeParametersParser()
