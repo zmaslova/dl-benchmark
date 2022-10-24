@@ -1,8 +1,8 @@
 import logging as log
 
-from .Singleton import Singleton
 from .intel_caffe.intel_caffe_wrapper import IntelCaffeWrapper
 from .openvino.openvino_wrapper import OpenVINOWrapper
+from .singleton import Singleton
 from .tensorflow.tensorflow_wrapper import TensorFlowWrapper
 
 
