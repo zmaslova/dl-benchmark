@@ -66,6 +66,19 @@ std::string guess_layout_from_shape(std::vector<int64_t> &shape);
 
 std::string format_double(const double number);
 
+template <typename T>
+std::vector<T> reorder(const std::vector<T> &vec, const std::vector<int> &indexes) {
+    if (vec.size() != indexes.size()) {
+        throw std::invalid_argument("Sizes of two vectors must be equal.");
+    }
+    std::vector<T> res(vec.size());
+    for (size_t i = 0; i < vec.size(); ++i) {
+        res[i] = vec[indexes[i]];
+    }
+
+    return res;
+}
+
 static inline double ns_to_ms(std::chrono::nanoseconds duration) {
     return static_cast<double>(duration.count()) * 0.000001;
 }

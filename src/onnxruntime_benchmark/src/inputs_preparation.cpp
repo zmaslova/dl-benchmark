@@ -115,15 +115,15 @@ Ort::Value create_image_info_tensor(const InputDescr &input_descr, const cv::Siz
     for (int b = 0; b < batch_size; ++b) {
         int64_t image_info_size = tensor_size / batch_size;
         for (int i = 0; i < image_info_size; ++i) {
-            int idx = b * image_info_size + i;
+            int id = b * image_info_size + i;
             if (0 == i) {
-                tensor_data[idx] = static_cast<T>(image_size.width);
+                tensor_data[id] = static_cast<T>(image_size.width);
             }
             else if (1 == i) {
-                tensor_data[idx] = static_cast<T>(image_size.height);
+                tensor_data[id] = static_cast<T>(image_size.height);
             }
             else {
-                tensor_data[idx] = 1;
+                tensor_data[id] = 1;
             }
         }
     }
@@ -258,11 +258,12 @@ Ort::Value get_random_tensor(const InputDescr &input_descr) {
 }
 
 std::vector<std::vector<Ort::Value>> get_input_tensors(const InputsInfo &inputs_info, int batch_size, int tensors_num) {
-    cv::Size img_input_size;
+    std::vector<cv::Size> img_input_sizes;
     for (const auto &[name, input_descr] : inputs_info) {
         const auto &tensor_descr = input_descr.tensor_descr;
         if (tensor_descr.is_image()) {
-            img_input_size = {static_cast<int>(tensor_descr.width()), static_cast<int>(tensor_descr.height())};
+            img_input_sizes.emplace_back(static_cast<int>(tensor_descr.width()),
+                                         static_cast<int>(tensor_descr.height()));
         }
     }
 
@@ -281,17 +282,17 @@ std::vector<std::vector<Ort::Value>> get_input_tensors(const InputsInfo &inputs_
                              << logger::endl;
             }
 
-            if (input_descr.files.empty() && !tensor_descr.is_image_info()) {
+            if (tensor_descr.is_image_info() && img_input_sizes.size() == 1) {
+                if (!input_descr.files.empty()) {
+                    logger::warn << "\tFiles for image info type will be ignored." << logger::endl;
+                }
+                tensors[i].push_back(get_image_info_tensor(input_descr, img_input_sizes[0], batch_size));
+            }
+            else if (input_descr.files.empty()) {
                 tensors[i].push_back(get_random_tensor(input_descr));
             }
             else if (tensor_descr.is_image()) {
                 tensors[i].push_back(get_tensor_from_image(input_descr, batch_size, start_file_index));
-            }
-            else if (tensor_descr.is_image_info()) {
-                if (!input_descr.files.empty()) {
-                    logger::warn << "\tFiles for image info type will be ignored." << logger::endl;
-                }
-                tensors[i].push_back(get_image_info_tensor(input_descr, img_input_size, batch_size));
             }
             else {
                 tensors[i].push_back(get_tensor_from_binary(input_descr, batch_size, start_file_index));

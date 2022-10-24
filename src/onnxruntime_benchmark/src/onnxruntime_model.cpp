@@ -117,9 +117,15 @@ void ONNXModel::fill_inputs_outputs_info() {
     }
 
     // sort to keep inputs name order with input tensors
-    std::sort(io.input_names.begin(), io.input_names.end(), [](const char *l, const char *r) {
-        return std::string(l) < std::string(r);
+    std::vector<int> idx(io.input_names.size());
+    std::iota(idx.begin(), idx.end(), 0);
+    std::sort(idx.begin(), idx.end(), [&names = io.input_names](const int l, const int r) {
+        return std::string(names[l]) < std::string(names[r]);
     });
+
+    io.input_names = utils::reorder(io.input_names, idx);
+    io.input_data_types = utils::reorder(io.input_data_types, idx);
+    io.input_shapes = utils::reorder(io.input_shapes, idx);
 }
 
 IOTensorsInfo ONNXModel::get_io_tensors_info() const {
