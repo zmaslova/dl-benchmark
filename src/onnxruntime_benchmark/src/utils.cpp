@@ -15,7 +15,7 @@
 #include <string>
 #include <vector>
 
-DataPrecision get_data_precision(ONNXTensorElementDataType type) {
+utils::DataPrecision utils::get_data_precision(ONNXTensorElementDataType type) {
     if (onnx_dtype_to_precision_map.count(type) > 0) {
         return onnx_dtype_to_precision_map.at(type);
     }
@@ -24,7 +24,7 @@ DataPrecision get_data_precision(ONNXTensorElementDataType type) {
     }
 }
 
-std::string get_precision_str(DataPrecision p) {
+std::string utils::get_precision_str(DataPrecision p) {
     for (auto &[key, val] : precision_to_str_map) {
         if (val == p) {
             return key;
@@ -33,13 +33,13 @@ std::string get_precision_str(DataPrecision p) {
     return "UNKNOWN";
 }
 
-void set_batch_size(InputsInfo &inputs_info, int batch_size) {
+void utils::set_batch_size(InputsInfo &inputs_info, int batch_size) {
     for (auto &[_, input_descr] : inputs_info) {
         input_descr.tensor_descr.set_batch(batch_size);
     }
 }
 
-int get_batch_size(const InputsInfo &inputs_info) {
+int utils::get_batch_size(const InputsInfo &inputs_info) {
     int batch_size = 0;
     for (auto &[name, info] : inputs_info) {
         auto &tensor_descr = info.tensor_descr;
@@ -60,7 +60,7 @@ int get_batch_size(const InputsInfo &inputs_info) {
     return batch_size;
 }
 
-std::string guess_layout_from_shape(std::vector<int64> &shape) {
+std::string utils::guess_layout_from_shape(std::vector<int64> &shape) {
     if (shape.size() == 2) {
         return "NC";
     }
@@ -73,7 +73,7 @@ std::string guess_layout_from_shape(std::vector<int64> &shape) {
     throw std::invalid_argument("Unsupported shape with size " + std::to_string(shape.size()));
 }
 
-std::string format_double(const double number) {
+std::string utils::format_double(const double number) {
     std::stringstream ss;
     ss << std::fixed << std::setprecision(2) << number;
     return ss.str();

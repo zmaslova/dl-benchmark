@@ -19,6 +19,7 @@ using InputsInfo = std::map<std::string, InputDescr>;
 using HighresClock = std::chrono::high_resolution_clock;
 using ns = std::chrono::nanoseconds;
 
+namespace utils {
 enum class DataPrecision : unsigned int {
     FP32 = 0,
     FP16,
@@ -81,3 +82,4 @@ static inline uint64_t sec_to_ms(uint32_t duration) {
 static inline uint64_t sec_to_ns(uint32_t duration) {
     return duration * 1000000000LL;
 }
+} // namespace utils

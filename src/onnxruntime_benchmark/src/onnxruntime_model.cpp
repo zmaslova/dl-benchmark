@@ -68,7 +68,7 @@ void ONNXModel::read_model(const std::string &model_path) {
     env = std::make_shared<Ort::Env>(ORT_LOGGING_LEVEL_ERROR, "ORT Bench");
     Ort::SessionOptions session_options;
     session_options.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_ALL);
-    session_options.SetExecutionMode(ExecutionMode::ORT_SEQUENTIAL); // Parallel
+    session_options.SetExecutionMode(ExecutionMode::ORT_PARALLEL); // Parallel
     if (nthreads > 0) {
         session_options.SetIntraOpNumThreads(nthreads);
     }
@@ -137,7 +137,7 @@ std::vector<double> ONNXModel::get_latencies() {
 }
 
 double ONNXModel::get_total_time_ms() const {
-    return ns_to_ms(total_end_time - total_start_time);
+    return utils::ns_to_ms(total_end_time - total_start_time);
 }
 
 void ONNXModel::run(const std::vector<Ort::Value> &input_tensors) {
@@ -150,7 +150,7 @@ void ONNXModel::run(const std::vector<Ort::Value> &input_tensors) {
                  io.input_names.size(),
                  io.output_names.data(),
                  io.output_names.size());
-    latencies.push_back(ns_to_ms(HighresClock::now() - infer_start_time));
+    latencies.push_back(utils::ns_to_ms(HighresClock::now() - infer_start_time));
 
     total_end_time = std::max(HighresClock::now(), total_end_time);
 }

@@ -146,52 +146,52 @@ Ort::Value create_tensor_from_binary(const InputDescr &input_descr, int batch_si
 }
 
 Ort::Value get_tensor_from_image(const InputDescr &input_descr, int batch_size, int start_index) {
-    auto precision = get_data_precision(input_descr.tensor_descr.type);
-    if (precision == DataPrecision::FP32) {
+    auto precision = utils::get_data_precision(input_descr.tensor_descr.type);
+    if (precision == utils::DataPrecision::FP32) {
         return create_tensor_from_image<float>(input_descr, batch_size, start_index);
     }
-    else if (precision == DataPrecision::S32) {
+    else if (precision == utils::DataPrecision::S32) {
         return create_tensor_from_image<int32_t>(input_descr, batch_size, start_index);
     }
-    else if (precision == DataPrecision::S64) {
+    else if (precision == utils::DataPrecision::S64) {
         return create_tensor_from_image<int64_t>(input_descr, batch_size, start_index);
     }
 
-    throw std::invalid_argument("Unsuported tensor precision: " + get_precision_str(precision));
+    throw std::invalid_argument("Unsuported tensor precision: " + utils::get_precision_str(precision));
 }
 
 Ort::Value get_tensor_from_binary(const InputDescr &input_descr, int batch_size, int start_index) {
-    auto precision = get_data_precision(input_descr.tensor_descr.type);
-    if (precision == DataPrecision::FP32) {
+    auto precision = utils::get_data_precision(input_descr.tensor_descr.type);
+    if (precision == utils::DataPrecision::FP32) {
         return create_tensor_from_binary<float>(input_descr, batch_size, start_index);
     }
-    else if (precision == DataPrecision::S32) {
+    else if (precision == utils::DataPrecision::S32) {
         return create_tensor_from_binary<int32_t>(input_descr, batch_size, start_index);
     }
-    else if (precision == DataPrecision::S64) {
+    else if (precision == utils::DataPrecision::S64) {
         return create_tensor_from_binary<int64_t>(input_descr, batch_size, start_index);
     }
-    else if (precision == DataPrecision::BOOL) {
+    else if (precision == utils::DataPrecision::BOOL) {
         return create_tensor_from_binary<uint8_t>(input_descr, batch_size, start_index);
     }
-    throw std::invalid_argument("Unsuported tensor precision: " + get_precision_str(precision));
+    throw std::invalid_argument("Unsuported tensor precision: " + utils::get_precision_str(precision));
 }
 
 Ort::Value get_random_tensor(const InputDescr &input_descr) {
-    auto precision = get_data_precision(input_descr.tensor_descr.type);
-    if (precision == DataPrecision::FP32) {
+    auto precision = utils::get_data_precision(input_descr.tensor_descr.type);
+    if (precision == utils::DataPrecision::FP32) {
         return create_random_tensor<float, float>(input_descr);
     }
-    else if (precision == DataPrecision::S32) {
+    else if (precision == utils::DataPrecision::S32) {
         return create_random_tensor<int32_t, int32_t>(input_descr);
     }
-    else if (precision == DataPrecision::S64) {
+    else if (precision == utils::DataPrecision::S64) {
         return create_random_tensor<int64_t, int64_t>(input_descr);
     }
-    else if (precision == DataPrecision::BOOL) {
+    else if (precision == utils::DataPrecision::BOOL) {
         return create_random_tensor<uint8_t, uint32_t>(input_descr, 0, 1);
     }
-    throw std::invalid_argument("Unsuported tensor precision: " + get_precision_str(precision));
+    throw std::invalid_argument("Unsuported tensor precision: " + utils::get_precision_str(precision));
 }
 
 std::vector<std::vector<Ort::Value>> get_input_tensors(const InputsInfo &inputs_info, int batch_size, int tensors_num) {
@@ -202,7 +202,7 @@ std::vector<std::vector<Ort::Value>> get_input_tensors(const InputsInfo &inputs_
         for (const auto &[name, input_descr] : inputs_info) {
             const auto &tensor_descr = input_descr.tensor_descr;
             logger::info << " \t" << name << " (" << tensor_descr.layout << " "
-                         << get_precision_str(get_data_precision(tensor_descr.type)) << " "
+                         << utils::get_precision_str(utils::get_data_precision(tensor_descr.type)) << " "
                          << shape_string(tensor_descr.shape) << ")" << logger::endl;
 
             if (!input_descr.files.empty() && static_cast<int>(input_descr.files.size()) < batch_size) {
@@ -321,7 +321,7 @@ InputsInfo get_inputs_info(const std::map<std::string, std::vector<std::string>>
     if (input_layouts.empty()) {
         logger::warn << "Layout will be detected automatically, as it wasn't provided explicitly." << logger::endl;
         for (auto &[name, input_descr] : input_info) {
-            input_descr.tensor_descr.layout = guess_layout_from_shape(input_descr.tensor_descr.shape);
+            input_descr.tensor_descr.layout = utils::guess_layout_from_shape(input_descr.tensor_descr.shape);
         }
     }
     return input_info;

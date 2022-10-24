@@ -13,11 +13,15 @@ cd onnxruntime
 git checkout v1.12.1
 git submodule update --init --recursive
 ```
-2. Configure it with `cmake`:
+2. Create `build` directory:
+```
+mkdir build && cd build
+```
+3. Configure it with `cmake`:
 ```
 cmake -DCMAKE_INSTALL_PREFIX=install -DCMAKE_BUILD_TYPE=Release -Donnxruntime_BUILD_FOR_NATIVE_MACHINE=ON -Donnxruntime_BUILD_UNIT_TESTS=OFF -Donnxruntime_USE_AUTOML=OFF -Donnxruntime_BUILD_SHARED_LIB=ON -Donnxruntime_USE_FULL_PROTOBUF=ON -Donnxruntime_USE_OPENMP=ON ../cmake
 ```
-3. Build and install project:
+4. Build and install project:
 ```
 cmake --build . --target install --config Release -- -j$(nproc --all)
 ```
@@ -90,9 +94,9 @@ To pass inputs for model use `-i` option.
 ```
 ./onnxruntime_benchmark -m model.onnx -i <path_to_input_data>
 ```
-By default, number of input to use determined based on model's batch size. If yout want to make inference on some set of inputs, you can specify the number of input files to take with `-nireq` option
+By default, number of inputs to use determined based on model's batch size. If yout want to make inference on some set, you can specify the number of files to take with `-nireq` option.
 
-If the model has several inputs, you must specify files for each input:
+If the model has several inputs, files or folders must be specified for each:
 ```
 ./onnxruntime_benchmark -m model.onnx -i input1:file1 input2:file2 input3:file3
 ```

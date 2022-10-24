@@ -139,7 +139,7 @@ int main(int argc, char *argv[]) {
     std::set_terminate(catcher);
     std::shared_ptr<Report> report;
 
-    log_step();
+    log_step(); // Parsing and validating input arguments
     logger::info << "Parsing input arguments" << logger::endl;
     parse(argc, argv);
     logger::info << "Checking input files" << logger::endl;
@@ -155,16 +155,16 @@ int main(int argc, char *argv[]) {
     }
     auto input_files = parse_input_files_arguments(gflags::GetArgvs());
 
-    log_step();
+    log_step(); // Loading ONNX Runtime
     logger::info << "ONNX Runtime version: " << OrtGetApiBase()->GetVersionString() << logger::endl;
 
-    log_step();
+    log_step(); // Reading model files
     ONNXModel model(FLAGS_nthreads);
     logger::info << "Reading model " << FLAGS_m << logger::endl;
     auto start_time = HighresClock::now();
     model.read_model(FLAGS_m);
-    auto read_model_time = ns_to_ms(HighresClock::now() - start_time);
-    logger::info << "Read model took " << format_double(read_model_time) << " ms" << logger::endl;
+    auto read_model_time = utils::ns_to_ms(HighresClock::now() - start_time);
+    logger::info << "Read model took " << utils::format_double(read_model_time) << " ms" << logger::endl;
     logger::info << "Model inputs/outputs info:" << logger::endl;
     model.fill_inputs_outputs_info();
     auto io_tensors_info = model.get_io_tensors_info();
@@ -174,11 +174,11 @@ int main(int argc, char *argv[]) {
     logger::info << "\tThreads number: " << (FLAGS_nthreads ? std::to_string(FLAGS_nthreads) : "DEFAULT")
                  << logger::endl;
 
-    log_step();
+    log_step(); // Configuring input of the model
     auto inputs_info =
         get_inputs_info(input_files, io_tensors_info.first, FLAGS_layout, FLAGS_shape, FLAGS_mean, FLAGS_scale);
     // determine batch size
-    int batch_size = get_batch_size(inputs_info);
+    int batch_size = utils::get_batch_size(inputs_info);
     if (batch_size == -1 && FLAGS_b > 0) {
         batch_size = FLAGS_b;
     }
@@ -189,10 +189,10 @@ int main(int argc, char *argv[]) {
         throw std::logic_error("Can't set batch for model with static batch dimension.");
     }
     // setting batch
-    set_batch_size(inputs_info, batch_size);
+    utils::set_batch_size(inputs_info, batch_size);
     logger::info << "Set batch to " << batch_size << logger::endl;
 
-    log_step();
+    log_step(); // Setting execution parameters
     // number of inference requests
     int num_requests = FLAGS_nireq;
     if (FLAGS_nireq == 0) {
@@ -216,35 +216,28 @@ int main(int argc, char *argv[]) {
         time_limit_sec = 60;
         logger::info << "Default time limit is set: " << time_limit_sec << " seconds " << logger::endl;
     }
-    uint64_t time_limit_ns = sec_to_ns(time_limit_sec);
+    uint64_t time_limit_ns = utils::sec_to_ns(time_limit_sec);
     if (report) {
         report->add_record(Report::Category::CONFIGURATION_SETUP,
                            {{"batch_size", std::to_string(batch_size)},
-                            {"duration", std::to_string(sec_to_ms(time_limit_sec))},
+                            {"duration", std::to_string(utils::sec_to_ms(time_limit_sec))},
                             {"iterations_num", std::to_string(num_iterations)},
                             {"tensors_num", std::to_string(num_requests)},
                             {"provider", "ORTDefault"},
                             {"target_device", "CPU"},
-                            {"precision", get_precision_str(get_data_precision(io_tensors_info.first[0].type))}});
+                            {"precision", utils::get_precision_str(utils::get_data_precision(io_tensors_info.first[0].type))}});
     }
 
-    log_step();
+    log_step(); // Creating input tensors
     auto tensors = get_input_tensors(inputs_info, batch_size, num_requests);
 
-
-    std::stringstream ss;
-    ss << num_requests << " inference requests, limits: ";
-    if (time_limit_sec > 0) {
-        ss << sec_to_ms(time_limit_sec) << " ms";
-    }
-    if (num_iterations > 0) {
-        ss << num_iterations << " iterations";
-    }
-    log_step(ss.str());
+    log_step("inference requests, limits: " +
+             (num_iterations > 0 ? std::to_string(num_iterations) + " iterations"
+                                 : std::to_string(utils::sec_to_ms(time_limit_sec)) + " ms")); // Measuring model performance
     // warm up before benhcmarking
     model.run(tensors[0]);
     auto first_inference_time = model.get_latencies()[0];
-    logger::info << "Warming up inference took " << format_double(first_inference_time) << " ms" << logger::endl;
+    logger::info << "Warming up inference took " << utils::format_double(first_inference_time) << " ms" << logger::endl;
     model.reset_timers();
 
     int64_t iteration = 0;
@@ -262,26 +255,27 @@ int main(int argc, char *argv[]) {
     double total_time = model.get_total_time_ms();
     // Performance metrics report
     logger::info << "Count: " << iteration << " iterations" << logger::endl;
-    logger::info << "Duration: " << format_double(total_time) << " ms" << logger::endl;
+    logger::info << "Duration: " << utils::format_double(total_time) << " ms" << logger::endl;
     logger::info << "Latency:" << logger::endl;
-    logger::info << "\tMedian   " << format_double(metrics.latency.median) << " ms" << logger::endl;
-    logger::info << "\tAverage: " << format_double(metrics.latency.avg) << " ms" << logger::endl;
-    logger::info << "\tMin:     " << format_double(metrics.latency.min) << " ms" << logger::endl;
-    logger::info << "\tMax:     " << format_double(metrics.latency.max) << " ms" << logger::endl;
-    logger::info << "Throughput: " << format_double(metrics.fps) << " FPS" << logger::endl;
+    logger::info << "\tMedian   " << utils::format_double(metrics.latency.median) << " ms" << logger::endl;
+    logger::info << "\tAverage: " << utils::format_double(metrics.latency.avg) << " ms" << logger::endl;
+    logger::info << "\tMin:     " << utils::format_double(metrics.latency.min) << " ms" << logger::endl;
+    logger::info << "\tMax:     " << utils::format_double(metrics.latency.max) << " ms" << logger::endl;
+    logger::info << "Throughput: " << utils::format_double(metrics.fps) << " FPS" << logger::endl;
 
     if (report) {
         report->add_record(Report::Category::EXECUTION_RESULTS,
-                           {{"execution_time", format_double(total_time)},
-                            {"first_inference_time", format_double(first_inference_time)},
+                           {{"execution_time", utils::format_double(total_time)},
+                            {"first_inference_time", utils::format_double(first_inference_time)},
                             {"iterations_num", std::to_string(iteration)},
-                            {"latency_avg", format_double(metrics.latency.avg)},
-                            {"latency_max", format_double(metrics.latency.max)},
-                            {"latency_median", format_double(metrics.latency.median)},
-                            {"latency_min", format_double(metrics.latency.min)},
-                            {"read_network_time", format_double(read_model_time)},
-                            {"throughput", format_double(metrics.fps)}});
+                            {"latency_avg", utils::format_double(metrics.latency.avg)},
+                            {"latency_max", utils::format_double(metrics.latency.max)},
+                            {"latency_median", utils::format_double(metrics.latency.median)},
+                            {"latency_min", utils::format_double(metrics.latency.min)},
+                            {"read_network_time", utils::format_double(read_model_time)},
+                            {"throughput", utils::format_double(metrics.fps)}});
         report->save();
     }
+
     return 0;
 }
