@@ -14,7 +14,7 @@ class FrameworkWrapperRegistry(metaclass=Singleton):
 
     def __init__(self):
         self._framework_wrappers = {}
-        self.find_wrappers()
+        self._get_wrappers()
         log.info(f'Available framework wrappers: {", ".join(self._framework_wrappers.keys())}')
 
     def __getitem__(self, framework_name):
@@ -24,7 +24,7 @@ class FrameworkWrapperRegistry(metaclass=Singleton):
         raise ValueError(f'Unsupported framework name: {framework_name}. '
                          f'Available framework wrappers: {", ".join(self._framework_wrappers.keys())}')
 
-    def find_wrappers(self):
+    def _get_wrappers(self):
         self._framework_wrappers[IntelCaffeWrapper.framework_name] = IntelCaffeWrapper()
         self._framework_wrappers[TensorFlowWrapper.framework_name] = TensorFlowWrapper()
         self._framework_wrappers[OpenVINOWrapper.framework_name] = OpenVINOWrapper()

@@ -2,6 +2,7 @@ import abc
 import platform
 from pathlib import Path
 
+
 class ProcessHandler(metaclass=abc.ABCMeta):
     def __init__(self, test, executor, log):
         self.__log = log
