@@ -8,7 +8,6 @@ python3 ../../src/benchmark/inference_benchmark.py -r results.csv --executor_typ
 success_tests=$(grep -o 'Success' results.csv | wc -l)
 if [ $success_tests -ne 3 ]; then
     echo "There are should be 3 tests and all the tests should be passed"
-    cat results.csv
     exit 1
 fi
 exit 0
