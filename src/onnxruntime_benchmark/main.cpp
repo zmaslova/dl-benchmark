@@ -171,7 +171,7 @@ int main(int argc, char *argv[]) {
         model.fill_inputs_outputs_info();
         auto io_tensors_info = model.get_io_tensors_info();
         log_model_inputs_outputs(io_tensors_info);
-        std::string target_device = "CPU"; // can be changed with when ov provider will be added
+        std::string target_device = "CPU"; // can be changed when ov provider will be added
         logger::info << "Device: " << target_device << logger::endl;
         logger::info << "\tThreads number: " << (FLAGS_nthreads ? std::to_string(FLAGS_nthreads) : "DEFAULT")
                      << logger::endl;
