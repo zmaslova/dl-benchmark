@@ -319,16 +319,18 @@ InputsInfo get_inputs_info(const std::map<std::string, std::vector<std::string>>
     // parse mean and check
     std::map<std::string, std::vector<float>> means = args::parse_mean_scale_string(mean_string);
     for (const auto &[input_name, input_mean] : means) {
-        if (input_mean.size() != 3) {
-            throw std::logic_error("Mean must have 3 values, one value per channel, but given: " + mean_string);
+        if (input_mean.size() > 4) {
+            throw std::logic_error("Mean must have one value per channel (up to 4 channels supposed), but given: " +
+                                   mean_string);
         }
     }
 
     // parse scale and check
     std::map<std::string, std::vector<float>> scales = args::parse_mean_scale_string(scale_string);
     for (const auto &[input_name, input_scale] : scales) {
-        if (input_scale.size() != 3) {
-            throw std::logic_error("Scale must have 3 values, one value per channel, but given: " + mean_string);
+        if (input_scale.size() > 4) {
+            throw std::logic_error("Scale must have one value per channel (up to 4 channels supposed), but given: " +
+                                   mean_string);
         }
     }
 
