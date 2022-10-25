@@ -1,7 +1,6 @@
 import abc
-import os
 import platform
-
+from pathlib import Path
 
 class ProcessHandler(metaclass=abc.ABCMeta):
     def __init__(self, test, executor, log):
@@ -10,7 +9,7 @@ class ProcessHandler(metaclass=abc.ABCMeta):
         self._executor = executor
         self._output = None
         self._status = None
-        self.inference_script_root = os.path.normpath(os.path.join(os.path.dirname(__file__), '../../', 'inference'))
+        self.inference_script_root = Path.joinpath(Path(__file__).parent.parent.parent, 'inference')
 
     @staticmethod
     def get_cmd_python_version():

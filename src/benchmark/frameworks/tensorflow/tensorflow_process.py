@@ -1,4 +1,4 @@
-import os
+from pathlib import Path
 
 from ..processes import ProcessHandler
 
@@ -67,7 +67,7 @@ class TensorFlowProcess(ProcessHandler):
         return average_time, fps, latency
 
     def _fill_command_line(self):
-        path_to_tensorflow_scrypt = os.path.join(self.inference_script_root, 'inference_tensorflow.py')
+        path_to_tensorflow_scrypt = Path.joinpath(self.inference_script_root, 'inference_tensorflow.py')
         python = ProcessHandler.get_cmd_python_version()
 
         model = self._test.model.model

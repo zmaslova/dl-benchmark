@@ -1,4 +1,4 @@
-import os
+from pathlib import Path
 
 from .openvino_process import OpenVINOProcess
 from ..processes import ProcessHandler
@@ -60,7 +60,7 @@ class AsyncOpenVINOProcess(OpenVINOPythonAPIProcess):
         return average_time, fps, 0
 
     def _fill_command_line(self):
-        path_to_async_scrypt = os.path.join(self.inference_script_root, 'inference_async_mode.py')
+        path_to_async_scrypt = Path.joinpath(self.inference_script_root, 'inference_async_mode.py')
         python = ProcessHandler.get_cmd_python_version()
 
         common_params = super()._fill_command_line()
@@ -91,7 +91,7 @@ class SyncOpenVINOProcess(OpenVINOPythonAPIProcess):
         return average_time, fps, latency
 
     def _fill_command_line(self):
-        path_to_sync_scrypt = os.path.join(self.inference_script_root, 'inference_sync_mode.py')
+        path_to_sync_scrypt = Path.joinpath(self.inference_script_root, 'inference_sync_mode.py')
         python = ProcessHandler.get_cmd_python_version()
 
         common_params = super()._fill_command_line()

@@ -1,7 +1,7 @@
 class FrameworkParameters:
     @staticmethod
     def _parameter_not_is_none(parameter):
-        return True if parameter is not None else False
+        return parameter is not None
 
     @staticmethod
     def _int_value_is_correct(int_value):

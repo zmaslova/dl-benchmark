@@ -1,4 +1,4 @@
-import os
+from pathlib import Path
 
 from ..config_parser.dependent_parameters_parser import DependentParametersParser
 from ..config_parser.framework_parameters_parser import FrameworkParameters
@@ -76,6 +76,4 @@ class OpenVINOParameters(FrameworkParameters):
         raise ValueError(f'Mode is a required parameter. Mode can only take values: {", ".join(const_correct_mode)}')
 
     def _extension_path_is_correct(self, extension):
-        if not self._parameter_not_is_none(extension) or os.path.exists(extension):
-            return True
-        return False
+        return not self._parameter_not_is_none(extension) or Path(extension).exists()
