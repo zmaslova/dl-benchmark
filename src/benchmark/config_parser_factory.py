@@ -9,6 +9,6 @@ def get_parameters_parser(framework):
         return IntelCaffeParametersParser()
     if framework == KnownFrameworks.tensorflow:
         return TensorFlowParametersParser()
-    if framework == KnownFrameworks.opevino_dldt:
+    if framework == KnownFrameworks.openvino_dldt:
         return OpenVINOParametersParser()
     raise NotImplementedError(f'Unknown framework {framework}')

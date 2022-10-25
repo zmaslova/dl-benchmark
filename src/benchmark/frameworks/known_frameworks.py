@@ -1,4 +1,4 @@
 class KnownFrameworks:
-    opevino_dldt = 'OpenVINO DLDT'
+    openvino_dldt = 'OpenVINO DLDT'
     tensorflow = 'TensorFlow'
     caffe = 'Caffe'

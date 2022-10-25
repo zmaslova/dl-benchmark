@@ -5,7 +5,7 @@ from ..known_frameworks import KnownFrameworks
 
 
 class OpenVINOWrapper(FrameworkWrapper):
-    framework_name = KnownFrameworks.opevino_dldt
+    framework_name = KnownFrameworks.openvino_dldt
 
     @staticmethod
     def create_process(test, executor, log, cpp_benchmark_path=None):

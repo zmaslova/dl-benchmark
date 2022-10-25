@@ -1,5 +1,5 @@
+import os.path
 import re
-from pathlib import Path
 
 from .openvino_process import OpenVINOProcess
 
@@ -93,7 +93,7 @@ class OpenVINOBenchmarkCppProcess(OpenVINOBenchmarkProcess):
         self._benchmark_path = cpp_benchmark_path
         self._perf_hint = perf_hint
 
-        if not cpp_benchmark_path or not Path(cpp_benchmark_path).exists():
+        if not cpp_benchmark_path or not os.path.exists(cpp_benchmark_path):
             raise ValueError('Must provide valid cpp_benchmark_path for OpenVINO C++ benchmark')
 
     @staticmethod
