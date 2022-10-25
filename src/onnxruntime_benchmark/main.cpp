@@ -291,6 +291,7 @@ int main(int argc, char *argv[]) {
             report->add_record(Report::Category::EXECUTION_RESULTS, {{"error", ex.what()}});
             report->save();
         }
+        return 3;
     }
     return 0;
 }
