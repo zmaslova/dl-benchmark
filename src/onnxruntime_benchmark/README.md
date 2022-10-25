@@ -1,5 +1,6 @@
 # ONNX Runtime Benchmark
 The tool allows to measure deep learning models inference performance with [ONNX Runtime](https://github.com/microsoft/onnxruntime). This implementation uses [OpenVINO Benchmark C++ tool](https://github.com/openvinotoolkit/openvino/tree/master/samples/cpp/benchmark_app) as a reference and stick to its testing methodology, thus performance results comparison of both tools is valid.
+
 ## Prerequisites
 The tool was tested on Ubuntu 20.04 (64-bit) with default GCC* 9.4.0
 1. CMake 3.13 or higher
@@ -10,7 +11,7 @@ The tool was tested on Ubuntu 20.04 (64-bit) with default GCC* 9.4.0
 ```
 git clone  https://github.com/microsoft/onnxruntime.git
 cd onnxruntime
-git checkout v1.12.1
+git checkout v1.13.1
 git submodule update --init --recursive
 ```
 2. Create `build` directory:
