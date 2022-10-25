@@ -70,11 +70,11 @@ Options:
         [-layout <[NCHW]>]                           layout for network input.
                                                      Ex., "input1[NCHW],input2[NC]" or just "[NCHW]"
         [-mean <R G B>]                              Mean values per channel for input image.
-                                                     Applicable only for models with one image input.
-                                                     Example: -mean 123.675 116.28 103.53
+                                                     Applicable only for models with image input.
+                                                     Ex.: [123.675,116.28,103.53] or with specifying inputs src[255,255,255]
         [-scale <R G B>]                             Scale values per channel for input image.
-                                                     Applicable only for models with one image input.
-                                                     Example: -scale 58.395 57.12 57.375
+                                                     Applicable only for models with image inputs.
+                                                     Ex.: [58.395,57.12,57.375] or with specifying inputs src[255,255,255]
         [-nthreads <NUMBER>]                         number of threads to utilize.
         [-nireq <NUMBER>]                            number of inference requests. If not provided, default value is set.
         [-niter <NUMBER>]                            number of iterations. If not provided, default time limit is set.
