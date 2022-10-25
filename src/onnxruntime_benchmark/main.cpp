@@ -136,164 +136,157 @@ void log_step(const std::string optional_info = "") {
     std::cout << "[Step " << step_id << "/" << steps.size() << "] " << steps.at(step_id)
               << (optional_info.empty() ? "" : " (" + optional_info + ")") << std::endl;
 }
-
-void catcher() noexcept {
-    if (std::current_exception()) {
-        try {
-            std::rethrow_exception(std::current_exception());
-        } catch (const std::exception &error) {
-            logger::err << error.what() << logger::endl;
-        } catch (...) {
-            logger::err << "Non-exception object thrown" << logger::endl;
-        }
-        std::exit(1);
-    }
-    std::abort();
-}
 } // namespace
 
 int main(int argc, char *argv[]) {
-    std::set_terminate(catcher);
     std::shared_ptr<Report> report;
-
-    log_step(); // Parsing and validating input arguments
-    logger::info << "Parsing input arguments" << logger::endl;
-    parse(argc, argv);
-    logger::info << "Checking input files" << logger::endl;
-    std::vector<gflags::CommandLineFlagInfo> flags;
-    gflags::GetAllFlags(&flags);
-    if (FLAGS_save_report) {
-        report = std::make_shared<Report>(FLAGS_report_path);
-        for (auto &flag : flags) {
-            if (!flag.is_default) {
-                report->add_record(Report::Category::CMD_OPTIONS, {{flag.name, flag.current_value}});
+    try {
+        log_step(); // Parsing and validating input arguments
+        logger::info << "Parsing input arguments" << logger::endl;
+        parse(argc, argv);
+        logger::info << "Checking input files" << logger::endl;
+        std::vector<gflags::CommandLineFlagInfo> flags;
+        gflags::GetAllFlags(&flags);
+        if (FLAGS_save_report) {
+            report = std::make_shared<Report>(FLAGS_report_path);
+            for (auto &flag : flags) {
+                if (!flag.is_default) {
+                    report->add_record(Report::Category::CMD_OPTIONS, {{flag.name, flag.current_value}});
+                }
             }
         }
-    }
-    auto input_files = args::parse_input_files_arguments(gflags::GetArgvs());
+        auto input_files = args::parse_input_files_arguments(gflags::GetArgvs());
 
-    log_step(); // Loading ONNX Runtime
-    logger::info << "ONNX Runtime version: " << OrtGetApiBase()->GetVersionString() << logger::endl;
+        log_step(); // Loading ONNX Runtime
+        logger::info << "ONNX Runtime version: " << OrtGetApiBase()->GetVersionString() << logger::endl;
 
-    log_step(); // Reading model files
-    ONNXModel model(FLAGS_nthreads);
-    logger::info << "Reading model " << FLAGS_m << logger::endl;
-    auto start_time = HighresClock::now();
-    model.read_model(FLAGS_m);
-    auto read_model_time = utils::ns_to_ms(HighresClock::now() - start_time);
-    logger::info << "Read model took " << utils::format_double(read_model_time) << " ms" << logger::endl;
-    logger::info << "Model inputs/outputs info:" << logger::endl;
-    model.fill_inputs_outputs_info();
-    auto io_tensors_info = model.get_io_tensors_info();
-    log_model_inputs_outputs(io_tensors_info);
-    std::string target_device = "CPU"; // will be used for ov provider
-    logger::info << "Device: " << target_device << logger::endl;
-    logger::info << "\tThreads number: " << (FLAGS_nthreads ? std::to_string(FLAGS_nthreads) : "DEFAULT")
-                 << logger::endl;
+        log_step(); // Reading model files
+        ONNXModel model(FLAGS_nthreads);
+        logger::info << "Reading model " << FLAGS_m << logger::endl;
+        auto start_time = HighresClock::now();
+        model.read_model(FLAGS_m);
+        auto read_model_time = utils::ns_to_ms(HighresClock::now() - start_time);
+        logger::info << "Read model took " << utils::format_double(read_model_time) << " ms" << logger::endl;
+        logger::info << "Model inputs/outputs info:" << logger::endl;
+        model.fill_inputs_outputs_info();
+        auto io_tensors_info = model.get_io_tensors_info();
+        log_model_inputs_outputs(io_tensors_info);
+        std::string target_device = "CPU"; // will be used for ov provider
+        logger::info << "Device: " << target_device << logger::endl;
+        logger::info << "\tThreads number: " << (FLAGS_nthreads ? std::to_string(FLAGS_nthreads) : "DEFAULT")
+                     << logger::endl;
 
-    log_step(); // Configuring input of the model
-    auto inputs_info =
-        get_inputs_info(input_files, io_tensors_info.first, FLAGS_layout, FLAGS_shape, FLAGS_mean, FLAGS_scale);
-    // determine batch size
-    int batch_size = utils::get_batch_size(inputs_info);
-    if (batch_size == -1 && FLAGS_b > 0) {
-        batch_size = FLAGS_b;
-    }
-    else if (batch_size == -1) {
-        throw std::logic_error("Model has dynamic batch size, but -b option wasn't provided.");
-    }
-    else if (FLAGS_b > 0) {
-        throw std::logic_error("Can't set batch for model with static batch dimension.");
-    }
-    // setting batch
-    utils::set_batch_size(inputs_info, batch_size);
-    logger::info << "Set batch to " << batch_size << logger::endl;
+        log_step(); // Configuring input of the model
+        auto inputs_info =
+            get_inputs_info(input_files, io_tensors_info.first, FLAGS_layout, FLAGS_shape, FLAGS_mean, FLAGS_scale);
+        // determine batch size
+        int batch_size = utils::get_batch_size(inputs_info);
+        if (batch_size == -1 && FLAGS_b > 0) {
+            batch_size = FLAGS_b;
+        }
+        else if (batch_size == -1) {
+            throw std::logic_error("Model has dynamic batch size, but -b option wasn't provided.");
+        }
+        else if (FLAGS_b > 0) {
+            throw std::logic_error("Can't set batch for model with static batch dimension.");
+        }
+        // setting batch
+        utils::set_batch_size(inputs_info, batch_size);
+        logger::info << "Set batch to " << batch_size << logger::endl;
 
-    log_step(); // Setting execution parameters
-    // number of inference requests
-    int num_requests = FLAGS_nireq;
-    if (FLAGS_nireq == 0) {
-        num_requests = 1;
-    }
-    // set and align iterations limit
-    int64_t num_iterations = FLAGS_niter;
-    if (num_iterations > 0) {
-        num_iterations = ((num_iterations + num_requests - 1) / num_requests) * num_requests;
-        if (FLAGS_niter != num_iterations) {
-            logger::warn << "Provided number of iterations " << FLAGS_niter << " was changed to " << num_iterations
-                         << " to be aligned with number of inference requests " << num_requests << logger::endl;
+        log_step(); // Setting execution parameters
+        // number of inference requests
+        int num_requests = FLAGS_nireq;
+        if (FLAGS_nireq == 0) {
+            num_requests = 1;
+        }
+        // set and align iterations limit
+        int64_t num_iterations = FLAGS_niter;
+        if (num_iterations > 0) {
+            num_iterations = ((num_iterations + num_requests - 1) / num_requests) * num_requests;
+            if (FLAGS_niter != num_iterations) {
+                logger::warn << "Provided number of iterations " << FLAGS_niter << " was changed to " << num_iterations
+                             << " to be aligned with number of inference requests " << num_requests << logger::endl;
+            }
+        }
+        // set time limit
+        uint32_t time_limit_sec = 0;
+        if (FLAGS_t != 0) {
+            time_limit_sec = FLAGS_t;
+        }
+        else if (FLAGS_niter == 0) {
+            time_limit_sec = 60;
+            logger::info << "Default time limit is set: " << time_limit_sec << " seconds " << logger::endl;
+        }
+        uint64_t time_limit_ns = utils::sec_to_ns(time_limit_sec);
+        if (report) {
+            report->add_record(
+                Report::Category::CONFIGURATION_SETUP,
+                {{"batch_size", std::to_string(batch_size)},
+                 {"duration", std::to_string(utils::sec_to_ms(time_limit_sec))},
+                 {"iterations_num", std::to_string(num_iterations)},
+                 {"tensors_num", std::to_string(num_requests)},
+                 {"provider", "ORTDefault"},
+                 {"target_device", "CPU"},
+                 {"precision", utils::get_precision_str(utils::get_data_precision(io_tensors_info.first[0].type))}});
+        }
+
+        log_step(); // Creating input tensors
+        auto tensors = get_input_tensors(inputs_info, batch_size, num_requests);
+
+        log_step("inference requests, limits: " +
+                 (num_iterations > 0
+                      ? std::to_string(num_iterations) + " iterations"
+                      : std::to_string(utils::sec_to_ms(time_limit_sec)) + " ms")); // Measuring model performance
+        // warm up before benhcmarking
+        model.run(tensors[0]);
+        auto first_inference_time = model.get_latencies()[0];
+        logger::info << "Warming up inference took " << utils::format_double(first_inference_time) << " ms"
+                     << logger::endl;
+        model.reset_timers();
+
+        int64_t iteration = 0;
+        start_time = HighresClock::now();
+        auto uptime = std::chrono::duration_cast<ns>(HighresClock::now() - start_time).count();
+        while ((num_iterations != 0 && iteration < num_iterations) ||
+               (time_limit_ns != 0 && static_cast<uint64_t>(uptime) < time_limit_ns)) {
+            model.run(tensors[iteration % tensors.size()]);
+            ++iteration;
+            uptime = std::chrono::duration_cast<ns>(HighresClock::now() - start_time).count();
+        }
+
+        log_step();
+        Metrics metrics(model.get_latencies(), batch_size);
+        double total_time = model.get_total_time_ms();
+        // Performance metrics report
+        logger::info << "Count: " << iteration << " iterations" << logger::endl;
+        logger::info << "Duration: " << utils::format_double(total_time) << " ms" << logger::endl;
+        logger::info << "Latency:" << logger::endl;
+        logger::info << "\tMedian   " << utils::format_double(metrics.latency.median) << " ms" << logger::endl;
+        logger::info << "\tAverage: " << utils::format_double(metrics.latency.avg) << " ms" << logger::endl;
+        logger::info << "\tMin:     " << utils::format_double(metrics.latency.min) << " ms" << logger::endl;
+        logger::info << "\tMax:     " << utils::format_double(metrics.latency.max) << " ms" << logger::endl;
+        logger::info << "Throughput: " << utils::format_double(metrics.fps) << " FPS" << logger::endl;
+
+        if (report) {
+            report->add_record(Report::Category::EXECUTION_RESULTS,
+                               {{"execution_time", utils::format_double(total_time)},
+                                {"first_inference_time", utils::format_double(first_inference_time)},
+                                {"iterations_num", std::to_string(iteration)},
+                                {"latency_avg", utils::format_double(metrics.latency.avg)},
+                                {"latency_max", utils::format_double(metrics.latency.max)},
+                                {"latency_median", utils::format_double(metrics.latency.median)},
+                                {"latency_min", utils::format_double(metrics.latency.min)},
+                                {"read_network_time", utils::format_double(read_model_time)},
+                                {"throughput", utils::format_double(metrics.fps)}});
+            report->save();
+        }
+    } catch (const std::exception &ex) {
+        logger::err << ex.what() << logger::endl;
+        if (report) {
+            report->add_record(Report::Category::EXECUTION_RESULTS, {{"error", ex.what()}});
+            report->save();
         }
     }
-    // set time limit
-    uint32_t time_limit_sec = 0;
-    if (FLAGS_t != 0) {
-        time_limit_sec = FLAGS_t;
-    }
-    else if (FLAGS_niter == 0) {
-        time_limit_sec = 60;
-        logger::info << "Default time limit is set: " << time_limit_sec << " seconds " << logger::endl;
-    }
-    uint64_t time_limit_ns = utils::sec_to_ns(time_limit_sec);
-    if (report) {
-        report->add_record(
-            Report::Category::CONFIGURATION_SETUP,
-            {{"batch_size", std::to_string(batch_size)},
-             {"duration", std::to_string(utils::sec_to_ms(time_limit_sec))},
-             {"iterations_num", std::to_string(num_iterations)},
-             {"tensors_num", std::to_string(num_requests)},
-             {"provider", "ORTDefault"},
-             {"target_device", "CPU"},
-             {"precision", utils::get_precision_str(utils::get_data_precision(io_tensors_info.first[0].type))}});
-    }
-
-    log_step(); // Creating input tensors
-    auto tensors = get_input_tensors(inputs_info, batch_size, num_requests);
-
-    log_step("inference requests, limits: " + (num_iterations > 0 ? std::to_string(num_iterations) + " iterations"
-                                                                  : std::to_string(utils::sec_to_ms(time_limit_sec)) +
-                                                                        " ms")); // Measuring model performance
-    // warm up before benhcmarking
-    model.run(tensors[0]);
-    auto first_inference_time = model.get_latencies()[0];
-    logger::info << "Warming up inference took " << utils::format_double(first_inference_time) << " ms" << logger::endl;
-    model.reset_timers();
-
-    int64_t iteration = 0;
-    start_time = HighresClock::now();
-    auto uptime = std::chrono::duration_cast<ns>(HighresClock::now() - start_time).count();
-    while ((num_iterations != 0 && iteration < num_iterations) ||
-           (time_limit_ns != 0 && static_cast<uint64_t>(uptime) < time_limit_ns)) {
-        model.run(tensors[iteration % tensors.size()]);
-        ++iteration;
-        uptime = std::chrono::duration_cast<ns>(HighresClock::now() - start_time).count();
-    }
-
-    log_step();
-    Metrics metrics(model.get_latencies(), batch_size);
-    double total_time = model.get_total_time_ms();
-    // Performance metrics report
-    logger::info << "Count: " << iteration << " iterations" << logger::endl;
-    logger::info << "Duration: " << utils::format_double(total_time) << " ms" << logger::endl;
-    logger::info << "Latency:" << logger::endl;
-    logger::info << "\tMedian   " << utils::format_double(metrics.latency.median) << " ms" << logger::endl;
-    logger::info << "\tAverage: " << utils::format_double(metrics.latency.avg) << " ms" << logger::endl;
-    logger::info << "\tMin:     " << utils::format_double(metrics.latency.min) << " ms" << logger::endl;
-    logger::info << "\tMax:     " << utils::format_double(metrics.latency.max) << " ms" << logger::endl;
-    logger::info << "Throughput: " << utils::format_double(metrics.fps) << " FPS" << logger::endl;
-
-    if (report) {
-        report->add_record(Report::Category::EXECUTION_RESULTS,
-                           {{"execution_time", utils::format_double(total_time)},
-                            {"first_inference_time", utils::format_double(first_inference_time)},
-                            {"iterations_num", std::to_string(iteration)},
-                            {"latency_avg", utils::format_double(metrics.latency.avg)},
-                            {"latency_max", utils::format_double(metrics.latency.max)},
-                            {"latency_median", utils::format_double(metrics.latency.median)},
-                            {"latency_min", utils::format_double(metrics.latency.min)},
-                            {"read_network_time", utils::format_double(read_model_time)},
-                            {"throughput", utils::format_double(metrics.fps)}});
-        report->save();
-    }
-
     return 0;
 }
