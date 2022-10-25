@@ -4,8 +4,8 @@ import subprocess
 import sys
 import threading
 
-import docker
 import psutil
+import docker
 
 
 class Executor(metaclass=abc.ABCMeta):
