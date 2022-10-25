@@ -10,7 +10,7 @@ class TensorFlowTest(Test):
                       f'{self.indep_parameters.inference_framework};input_shape;{self.model.precision};'
                       f'{self.indep_parameters.batch_size};Sync;Device: {self.indep_parameters.device},'
                       f' Iteration count: {self.indep_parameters.iteration},'
-                      f'Thread count: {self.dep_parameters.nthreads},'
+                      f' Thread count: {self.dep_parameters.nthreads},'
                       f' Inter threads: {self.dep_parameters.num_inter_threads},'
                       f' Intra threads: {self.dep_parameters.num_intra_threads},'
                       f' KMP_AFFINITY: {self.dep_parameters.kmp_affinity}')
