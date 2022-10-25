@@ -6,13 +6,14 @@ def create_process(test, executor, log, cpp_benchmark_path=None):
     mode = test.dep_parameters.mode.lower()
     if mode == 'sync':
         return SyncOpenVINOProcess(test, executor, log)
-    elif mode == 'async':
+    if mode == 'async':
         return AsyncOpenVINOProcess(test, executor, log)
-    elif mode == 'ovbenchmark_python_latency':
+    if mode == 'ovbenchmark_python_latency':
         return OpenVINOBenchmarkPythonProcess(test, executor, log, 'latency')
-    elif mode == 'ovbenchmark_python_throughput':
+    if mode == 'ovbenchmark_python_throughput':
         return OpenVINOBenchmarkPythonProcess(test, executor, log, 'throughput')
-    elif mode == 'ovbenchmark_cpp_latency':
+    if mode == 'ovbenchmark_cpp_latency':
         return OpenVINOBenchmarkCppProcess(test, executor, log, cpp_benchmark_path, 'latency')
-    elif mode == 'ovbenchmark_cpp_throughput':
+    if mode == 'ovbenchmark_cpp_throughput':
         return OpenVINOBenchmarkCppProcess(test, executor, log, cpp_benchmark_path, 'throughput')
+    raise AssertionError(f'Unknown openvino running mode {mode}')

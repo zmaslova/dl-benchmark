@@ -9,47 +9,47 @@ class TensorFlowProcess(ProcessHandler):
 
     @staticmethod
     def __add_channel_swap_for_cmd_line(command_line, channel_swap):
-        return '{0} --channel_swap {1}'.format(command_line, channel_swap)
+        return f'{command_line} --channel_swap {channel_swap}'
 
     @staticmethod
     def __add_mean_for_cmd_line(command_line, mean):
-        return '{0} --mean {1}'.format(command_line, mean)
+        return f'{command_line} --mean {mean}'
 
     @staticmethod
     def __add_input_scale_for_cmd_line(command_line, input_scale):
-        return '{0} --input_scale {1}'.format(command_line, input_scale)
+        return f'{command_line} --input_scale {input_scale}'
 
     @staticmethod
     def __add_input_shape_for_cmd_line(command_line, input_shape):
-        return '{0} --input_shape {1}'.format(command_line, input_shape)
+        return f'{command_line} --input_shape {input_shape}'
 
     @staticmethod
     def __add_input_name_for_cmd_line(command_line, input_name):
-        return '{0} --input_name {1}'.format(command_line, input_name)
+        return f'{command_line} --input_name {input_name}'
 
     @staticmethod
     def __add_output_names_for_cmd_line(command_line, output_names):
-        return '{0} --output_names {1}'.format(command_line, output_names)
+        return f'{command_line} --output_names {output_names}'
 
     @staticmethod
     def __add_nthreads_for_cmd_line(command_line, nthreads):
-        return 'OMP_NUM_THREADS={1} {0}'.format(command_line, nthreads)
+        return f'OMP_NUM_THREADS={command_line} {nthreads}'
 
     @staticmethod
     def __add_num_inter_threads_for_cmd_line(command_line, num_inter_threads):
-        return '{0} --num_inter_threads {1}'.format(command_line, num_inter_threads)
+        return f'{command_line} --num_inter_threads {num_inter_threads}'
 
     @staticmethod
     def __add_num_intra_threads_for_cmd_line(command_line, num_intra_threads):
-        return '{0} --num_intra_threads {1}'.format(command_line, num_intra_threads)
+        return f'{command_line} --num_intra_threads {num_intra_threads}'
 
     @staticmethod
     def __add_kmp_affinity_for_cmd_line(command_line, kmp_affinity):
-        return 'KMP_AFFINITY={1} {0}'.format(command_line, kmp_affinity)
+        return f'KMP_AFFINITY={command_line} {kmp_affinity}'
 
     @staticmethod
     def __add_raw_output_time_for_cmd_line(command_line, raw_output):
-        return '{0} {1}'.format(command_line, raw_output)
+        return f'{command_line} {raw_output}'
 
     @staticmethod
     def create_process(test, executor, log):
@@ -68,7 +68,7 @@ class TensorFlowProcess(ProcessHandler):
 
     def _fill_command_line(self):
         path_to_tensorflow_scrypt = os.path.join(self.inference_script_root, 'inference_tensorflow.py')
-        python = ProcessHandler._get_cmd_python_version()
+        python = ProcessHandler.get_cmd_python_version()
 
         model = self._test.model.model
         dataset = self._test.dataset.path
@@ -76,7 +76,7 @@ class TensorFlowProcess(ProcessHandler):
         device = self._test.indep_parameters.device
         iteration = self._test.indep_parameters.iteration
 
-        common_params = '-m {0} -i {1} -b {2} -d {3} -ni {4}'.format(model, dataset, batch, device, iteration)
+        common_params = f'-m {model} -i {dataset} -b {batch} -d {device} -ni {iteration}'
 
         channel_swap = self._test.dep_parameters.channel_swap
         if channel_swap:
@@ -105,7 +105,7 @@ class TensorFlowProcess(ProcessHandler):
 
         common_params = TensorFlowProcess.__add_raw_output_time_for_cmd_line(common_params, '--raw_output true')
 
-        command_line = '{0} {1} {2}'.format(python, path_to_tensorflow_scrypt, common_params)
+        command_line = f'{python} {path_to_tensorflow_scrypt} {common_params}'
 
         nthreads = self._test.dep_parameters.nthreads
         if nthreads:

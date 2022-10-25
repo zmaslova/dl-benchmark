@@ -53,7 +53,7 @@ WRAPPER_REGISTRY = FrameworkWrapperRegistry()
 @pytest.mark.parametrize('os', [['Linux', 'python3'], ['Windows', 'python']])
 def test_python_version(os, mocker):
     mocker.patch('platform.system', return_value=os[0])
-    assert ProcessHandler._get_cmd_python_version() == os[1]
+    assert ProcessHandler.get_cmd_python_version() == os[1]
 
 
 @pytest.mark.parametrize('inference_framework', [['OpenVINO DLDT', OpenVINOProcess], ['Caffe', IntelCaffeProcess],

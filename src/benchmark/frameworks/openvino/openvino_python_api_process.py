@@ -61,7 +61,7 @@ class AsyncOpenVINOProcess(OpenVINOPythonAPIProcess):
 
     def _fill_command_line(self):
         path_to_async_scrypt = os.path.join(self.inference_script_root, 'inference_async_mode.py')
-        python = ProcessHandler._get_cmd_python_version()
+        python = ProcessHandler.get_cmd_python_version()
 
         common_params = super()._fill_command_line()
         command_line = f'{python} {path_to_async_scrypt} {common_params}'
@@ -92,7 +92,7 @@ class SyncOpenVINOProcess(OpenVINOPythonAPIProcess):
 
     def _fill_command_line(self):
         path_to_sync_scrypt = os.path.join(self.inference_script_root, 'inference_sync_mode.py')
-        python = ProcessHandler._get_cmd_python_version()
+        python = ProcessHandler.get_cmd_python_version()
 
         common_params = super()._fill_command_line()
         command_line = f'{python} {path_to_sync_scrypt} {common_params}'

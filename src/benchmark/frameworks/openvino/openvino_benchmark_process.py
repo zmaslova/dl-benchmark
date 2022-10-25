@@ -20,7 +20,7 @@ class OpenVINOBenchmarkProcess(OpenVINOProcess):
     def _add_extension_for_cmd_line(command_line, extension, device):
         if 'GPU' in device:
             return f'{command_line} -c {extension}'
-        elif 'CPU' in device or 'MYRIAD' in device:
+        if 'CPU' in device or 'MYRIAD' in device:
             return f'{command_line} -l {extension}'
         return command_line
 
@@ -61,7 +61,7 @@ class OpenVINOBenchmarkPythonProcess(OpenVINOBenchmarkProcess):
         self._perf_hint = perf_hint
 
     @staticmethod
-    def create_process(test, executor, log, cpp_benchmark_path=None):
+    def create_process(test, executor, log):
         return OpenVINOBenchmarkPythonProcess(test, executor, log)
 
     def _fill_command_line(self):

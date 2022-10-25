@@ -48,7 +48,7 @@ class IntelCaffeProcess(ProcessHandler):
 
     def _fill_command_line(self):
         path_to_intelcaffe_scrypt = os.path.join(self.inference_script_root, 'inference_caffe.py')
-        python = ProcessHandler._get_cmd_python_version()
+        python = ProcessHandler.get_cmd_python_version()
 
         model_prototxt = self._test.model.model
         model_caffemodel = self._test.model.weight

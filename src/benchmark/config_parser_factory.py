@@ -7,9 +7,8 @@ from frameworks.tensorflow.tensorflow_parameters_parser import TensorFlowParamet
 def get_parameters_parser(framework):
     if framework == KnownFrameworks.caffe:
         return IntelCaffeParametersParser()
-    elif framework == KnownFrameworks.tensorflow:
+    if framework == KnownFrameworks.tensorflow:
         return TensorFlowParametersParser()
-    elif framework == KnownFrameworks.opevino_dldt:
+    if framework == KnownFrameworks.opevino_dldt:
         return OpenVINOParametersParser()
-    else:
-        raise NotImplementedError(f'Unknown framework {framework}')
+    raise NotImplementedError(f'Unknown framework {framework}')
