@@ -47,7 +47,7 @@ const T get_mat_value(const cv::Mat &mat, size_t h, size_t w, size_t c) {
 };
 
 template <class T, class T2>
-Ort::Value create_random_tensor(const InputDescr &input_descr,
+Ort::Value create_random_tensor(const inputs::InputDescr &input_descr,
                                 T rand_min = std::numeric_limits<uint8_t>::min(),
                                 T rand_max = std::numeric_limits<uint8_t>::max()) {
     logger::info << "\t\tRandomly generated data" << logger::endl;
@@ -69,7 +69,7 @@ Ort::Value create_random_tensor(const InputDescr &input_descr,
 }
 
 template <class T>
-Ort::Value create_tensor_from_image(const InputDescr &input_descr, int batch_size, int start_index) {
+Ort::Value create_tensor_from_image(const inputs::InputDescr &input_descr, int batch_size, int start_index) {
     auto tensor_descr = input_descr.tensor_descr;
     const auto &files = input_descr.files;
 
@@ -100,7 +100,7 @@ Ort::Value create_tensor_from_image(const InputDescr &input_descr, int batch_siz
 }
 
 template <class T>
-Ort::Value create_image_info_tensor(const InputDescr &input_descr, const cv::Size &image_size, int batch_size) {
+Ort::Value create_image_info_tensor(const inputs::InputDescr &input_descr, const cv::Size &image_size, int batch_size) {
     auto tensor_descr = input_descr.tensor_descr;
 
     auto allocator = Ort::AllocatorWithDefaultOptions();
@@ -131,7 +131,7 @@ Ort::Value create_image_info_tensor(const InputDescr &input_descr, const cv::Siz
 }
 
 template <class T>
-Ort::Value create_tensor_from_binary(const InputDescr &input_descr, int batch_size, int start_index) {
+Ort::Value create_tensor_from_binary(const inputs::InputDescr &input_descr, int batch_size, int start_index) {
     auto tensor_descr = input_descr.tensor_descr;
     const auto &files = input_descr.files;
 
@@ -178,7 +178,7 @@ Ort::Value create_tensor_from_binary(const InputDescr &input_descr, int batch_si
     return tensor;
 }
 
-Ort::Value get_tensor_from_image(const InputDescr &input_descr, int batch_size, int start_index) {
+Ort::Value get_tensor_from_image(const inputs::InputDescr &input_descr, int batch_size, int start_index) {
     auto precision = utils::get_data_precision(input_descr.tensor_descr.type);
     if (precision == utils::DataPrecision::FP32) {
         return create_tensor_from_image<float>(input_descr, batch_size, start_index);
@@ -193,7 +193,7 @@ Ort::Value get_tensor_from_image(const InputDescr &input_descr, int batch_size, 
     throw std::invalid_argument("Unsuported tensor precision: " + utils::get_precision_str(precision));
 }
 
-Ort::Value get_image_info_tensor(const InputDescr &input_descr, const cv::Size &image_size, int batch_size) {
+Ort::Value get_image_info_tensor(const inputs::InputDescr &input_descr, const cv::Size &image_size, int batch_size) {
     auto precision = utils::get_data_precision(input_descr.tensor_descr.type);
     if (precision == utils::DataPrecision::FP16) {
         return create_image_info_tensor<short>(input_descr, image_size, batch_size);
@@ -211,7 +211,7 @@ Ort::Value get_image_info_tensor(const InputDescr &input_descr, const cv::Size &
     throw std::invalid_argument("Unsuported tensor precision: " + utils::get_precision_str(precision));
 }
 
-Ort::Value get_tensor_from_binary(const InputDescr &input_descr, int batch_size, int start_index) {
+Ort::Value get_tensor_from_binary(const inputs::InputDescr &input_descr, int batch_size, int start_index) {
     auto precision = utils::get_data_precision(input_descr.tensor_descr.type);
     if (precision == utils::DataPrecision::FP16) {
         return create_tensor_from_binary<short>(input_descr, batch_size, start_index);
@@ -231,7 +231,7 @@ Ort::Value get_tensor_from_binary(const InputDescr &input_descr, int batch_size,
     throw std::invalid_argument("Unsuported tensor precision: " + utils::get_precision_str(precision));
 }
 
-Ort::Value get_random_tensor(const InputDescr &input_descr) {
+Ort::Value get_random_tensor(const inputs::InputDescr &input_descr) {
     auto precision = utils::get_data_precision(input_descr.tensor_descr.type);
     if (precision == utils::DataPrecision::FP16) {
         return create_random_tensor<short, short>(input_descr);
@@ -257,7 +257,9 @@ Ort::Value get_random_tensor(const InputDescr &input_descr) {
     throw std::invalid_argument("Unsuported tensor precision: " + utils::get_precision_str(precision));
 }
 
-std::vector<std::vector<Ort::Value>> get_input_tensors(const InputsInfo &inputs_info, int batch_size, int tensors_num) {
+std::vector<std::vector<Ort::Value>> inputs::get_input_tensors(const inputs::InputsInfo &inputs_info,
+                                                               int batch_size,
+                                                               int tensors_num) {
     std::vector<cv::Size> img_input_sizes;
     for (const auto &[name, input_descr] : inputs_info) {
         const auto &tensor_descr = input_descr.tensor_descr;
@@ -303,12 +305,12 @@ std::vector<std::vector<Ort::Value>> get_input_tensors(const InputsInfo &inputs_
     return tensors;
 }
 
-InputsInfo get_inputs_info(const std::map<std::string, std::vector<std::string>> &input_files,
-                           const std::vector<ONNXTensorDescr> &model_inputs,
-                           const std::string &layout_string,
-                           const std::string &shape_string,
-                           const std::string &mean_string,
-                           const std::string &scale_string) {
+inputs::InputsInfo inputs::get_inputs_info(const std::map<std::string, std::vector<std::string>> &input_files,
+                                           const std::vector<ONNXTensorDescr> &model_inputs,
+                                           const std::string &layout_string,
+                                           const std::string &shape_string,
+                                           const std::string &mean_string,
+                                           const std::string &scale_string) {
     // parse input layouts and input shapes
     std::map<std::string, std::string> input_layouts = args::parse_shape_layout_string(layout_string);
     std::map<std::string, std::vector<int64_t>> input_shapes;
@@ -346,9 +348,9 @@ InputsInfo get_inputs_info(const std::map<std::string, std::vector<std::string>>
         throw std::logic_error("Shapes must be specified explicitly for models with dynamic input shapes.");
     }
 
-    InputsInfo input_info;
+    inputs::InputsInfo input_info;
     for (const auto &input : model_inputs) {
-        InputDescr input_descr;
+        inputs::InputDescr input_descr;
         input_descr.tensor_descr = input;
         auto &tensor_descr = input_descr.tensor_descr;
 
@@ -430,4 +432,31 @@ InputsInfo get_inputs_info(const std::map<std::string, std::vector<std::string>>
         }
     }
     return input_info;
+}
+
+void inputs::set_batch_size(inputs::InputsInfo &inputs_info, int batch_size) {
+    for (auto &[_, input_descr] : inputs_info) {
+        input_descr.tensor_descr.set_batch(batch_size);
+    }
+}
+
+int inputs::get_batch_size(const inputs::InputsInfo &inputs_info) {
+    int batch_size = 0;
+    for (auto &[name, info] : inputs_info) {
+        auto &tensor_descr = info.tensor_descr;
+        std::size_t batch_index = tensor_descr.layout.find("N");
+        if (batch_index != std::string::npos) {
+            if (batch_size == 0) {
+                batch_size = tensor_descr.shape[batch_index];
+            }
+            else if (batch_size != tensor_descr.shape[batch_index]) {
+                throw std::logic_error("Batch size is different for different inputs!");
+            }
+        }
+    }
+    if (batch_size == 0) {
+        logger::warn << "Batch dimension not found, batch is set to 1" << logger::endl;
+        batch_size = 1;
+    }
+    return batch_size;
 }

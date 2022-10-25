@@ -88,14 +88,14 @@ To run tool with default options you should provide only path to model file in `
 ```
 ./benchmark_app -m model.onnx
 ```
-By default, the application make inference on randomly-generated tensors for 60 seconds. For inference only `CPU` device is available for now.
+By default, the application makes inference on randomly-generated tensors for 60 seconds. For inference only default provider (`CPU` device) is available for now.
 
 ### Inputs
 To pass inputs for model use `-i` option.
 ```
 ./onnxruntime_benchmark -m model.onnx -i <path_to_input_data>
 ```
-By default, number of inputs to use determined based on model's batch size. If yout want to make inference on some set, you can specify the number of files to take with `-nireq` option.
+By default, number of inputs to use determined based on model's batch size. If yout want to make inference on some files set, you can specify the number of files to take with `-nireq` option.
 
 If the model has several inputs, files or folders must be specified for each:
 ```
@@ -105,16 +105,16 @@ If the model has several inputs, files or folders must be specified for each:
 ### Shape and layout options
 To make inference with dynamic model, you must specify shape for every model's input:
 ```
-./onnxruntime_benchmark -m model.onnx -i input1:file1 input2:file2 input3:file3 -shape input1[NUM1,NUM2],input1[NUM3,NUM4],input1[NUM5,NUM6]
+./onnxruntime_benchmark -m model.onnx -i input1:file1 input2:file2 input3:file3 -shape input1[N,C],input1[N,C],input1[N,C]
 ```
-Or, if all inputs have the same shape, you could pass just `-shape [NUM1,NUM2]`. The same rules are applied to `-layout` option.
+Or if all inputs have the same shape you could pass just `-shape [N,C]`. The same rules are applied to `-layout` option.
 
 ### Report
 To save a report with tool configuration and performance results specify `-save_report` flag:
 ```
 ./benchmark_app -m model.onnx -save_report -report_path report/report.json
 ```
-if `-report_path` wasn't provided then it will be saved in the current directory under `ort_benchmark.json` name. If specified folder doesn't exist, it will be created.
+if `-report_path` isn't provided, it will be saved in the current directory under `ort_benchmark.json` name.
 
 ## Output examples
 Below is a sample output of the tool from the terminal:

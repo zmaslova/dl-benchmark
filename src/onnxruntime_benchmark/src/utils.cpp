@@ -33,34 +33,7 @@ std::string utils::get_precision_str(DataPrecision p) {
     return "UNKNOWN";
 }
 
-void utils::set_batch_size(InputsInfo &inputs_info, int batch_size) {
-    for (auto &[_, input_descr] : inputs_info) {
-        input_descr.tensor_descr.set_batch(batch_size);
-    }
-}
-
-int utils::get_batch_size(const InputsInfo &inputs_info) {
-    int batch_size = 0;
-    for (auto &[name, info] : inputs_info) {
-        auto &tensor_descr = info.tensor_descr;
-        std::size_t batch_index = tensor_descr.layout.find("N");
-        if (batch_index != std::string::npos) {
-            if (batch_size == 0) {
-                batch_size = tensor_descr.shape[batch_index];
-            }
-            else if (batch_size != tensor_descr.shape[batch_index]) {
-                throw std::logic_error("Batch size is different for different inputs!");
-            }
-        }
-    }
-    if (batch_size == 0) {
-        logger::warn << "Batch dimension not found, batch is set to 1" << logger::endl;
-        batch_size = 1;
-    }
-    return batch_size;
-}
-
-std::string utils::guess_layout_from_shape(std::vector<int64> &shape) {
+std::string utils::guess_layout_from_shape(const std::vector<int64> &shape) {
     if (shape.size() == 2) {
         return "NC";
     }

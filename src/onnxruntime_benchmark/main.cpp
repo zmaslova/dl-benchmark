@@ -171,16 +171,20 @@ int main(int argc, char *argv[]) {
         model.fill_inputs_outputs_info();
         auto io_tensors_info = model.get_io_tensors_info();
         log_model_inputs_outputs(io_tensors_info);
-        std::string target_device = "CPU"; // will be used for ov provider
+        std::string target_device = "CPU"; // can be changed with when ov provider will be added
         logger::info << "Device: " << target_device << logger::endl;
         logger::info << "\tThreads number: " << (FLAGS_nthreads ? std::to_string(FLAGS_nthreads) : "DEFAULT")
                      << logger::endl;
 
         log_step(); // Configuring input of the model
-        auto inputs_info =
-            get_inputs_info(input_files, io_tensors_info.first, FLAGS_layout, FLAGS_shape, FLAGS_mean, FLAGS_scale);
+        auto inputs_info = inputs::get_inputs_info(input_files,
+                                                   io_tensors_info.first,
+                                                   FLAGS_layout,
+                                                   FLAGS_shape,
+                                                   FLAGS_mean,
+                                                   FLAGS_scale);
         // determine batch size
-        int batch_size = utils::get_batch_size(inputs_info);
+        int batch_size = inputs::get_batch_size(inputs_info);
         if (batch_size == -1 && FLAGS_b > 0) {
             batch_size = FLAGS_b;
         }
@@ -191,7 +195,7 @@ int main(int argc, char *argv[]) {
             throw std::logic_error("Can't set batch for model with static batch dimension.");
         }
         // setting batch
-        utils::set_batch_size(inputs_info, batch_size);
+        inputs::set_batch_size(inputs_info, batch_size);
         logger::info << "Set batch to " << batch_size << logger::endl;
 
         log_step(); // Setting execution parameters
@@ -232,7 +236,7 @@ int main(int argc, char *argv[]) {
         }
 
         log_step(); // Creating input tensors
-        auto tensors = get_input_tensors(inputs_info, batch_size, num_requests);
+        auto tensors = inputs::get_input_tensors(inputs_info, batch_size, num_requests);
 
         log_step("inference requests, limits: " +
                  (num_iterations > 0

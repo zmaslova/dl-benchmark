@@ -13,9 +13,6 @@
 #include <string>
 #include <vector>
 
-struct InputDescr;
-using InputsInfo = std::map<std::string, InputDescr>;
-
 using HighresClock = std::chrono::high_resolution_clock;
 using ns = std::chrono::nanoseconds;
 
@@ -58,11 +55,7 @@ DataPrecision get_data_precision(ONNXTensorElementDataType type);
 
 std::string get_precision_str(DataPrecision p);
 
-int get_batch_size(const InputsInfo &inputs_info);
-
-void set_batch_size(InputsInfo &inputs_info, int batch_size);
-
-std::string guess_layout_from_shape(std::vector<int64_t> &shape);
+std::string guess_layout_from_shape(const std::vector<int64_t> &shape);
 
 std::string format_double(const double number);
 
