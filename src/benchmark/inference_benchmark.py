@@ -2,11 +2,11 @@ import argparse
 import logging as log
 import os
 import sys
-from framework_wrapper import FrameworkWrapperRegistry
 
-import config_parser
-from output import OutputHandler
+from config_processor import process_config
 from executors import Executor
+from frameworks.framework_wrapper_registry import FrameworkWrapperRegistry
+from output import OutputHandler
 
 
 def cli_argument_parser():
@@ -63,7 +63,7 @@ if __name__ == '__main__':
         )
 
         args = cli_argument_parser()
-        test_list = config_parser.process_config(args.config_path, log)
+        test_list = process_config(args.config_path, log)
 
         log.info(f'Create result table with name: {args.result_file}')
 

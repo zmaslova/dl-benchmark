@@ -1,5 +1,6 @@
 import abc
 import platform
+from pathlib import Path
 
 
 class ProcessHandler(metaclass=abc.ABCMeta):
@@ -9,9 +10,10 @@ class ProcessHandler(metaclass=abc.ABCMeta):
         self._executor = executor
         self._output = None
         self._status = None
+        self.inference_script_root = Path.joinpath(Path(__file__).parent.parent.parent, 'inference')
 
     @staticmethod
-    def _get_cmd_python_version():
+    def get_cmd_python_version():
         cmd_python_version = ''
         os_type = platform.system()
         if os_type == 'Linux':
@@ -75,7 +77,7 @@ class ProcessHandler(metaclass=abc.ABCMeta):
     def __save_failed_test_log(self):
         log_filename = self.__make_log_filename()
         out = self._output
-        with open(log_filename, 'w') as file:
+        with open(log_filename, 'w', encoding='utf-8') as file:
             for line in out:
                 file.write(line)
 
