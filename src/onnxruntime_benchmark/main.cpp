@@ -43,14 +43,16 @@ DEFINE_string(layout, "", layout_msg);
 
 constexpr char input_mean_msg[] =
     "Mean values per channel for input image.\n"
-    "                                                     Applicable only for models with one image input.\n"
-    "                                                     Example: -mean 123.675 116.28 103.53";
+    "                                                     Applicable only for models with image input.\n"
+    "                                                     Ex.: [123.675,116.28,103.53] or with specifying inputs "
+    "src[255,255,255]";
 DEFINE_string(mean, "", input_mean_msg);
 
 constexpr char input_scale_msg[] =
     "Scale values per channel for input image.\n"
-    "                                                     Applicable only for models with one image input.\n"
-    "                                                     Example: -scale 58.395 57.12 57.375";
+    "                                                     Applicable only for models with image inputs.\n"
+    "                                                     Ex.: [58.395,57.12,57.375] or with specifying inputs "
+    "src[255,255,255]";
 DEFINE_string(scale, "", input_scale_msg);
 
 constexpr char threads_num_msg[] = "number of threads to utilize.";
@@ -95,6 +97,21 @@ void parse(int argc, char *argv[]) {
     }
     if (FLAGS_m.empty()) {
         throw std::invalid_argument{"-m <MODEL FILE> can't be empty"};
+    }
+}
+
+void log_model_inputs_outputs(const IOTensorsInfo &tensors_info) {
+    const auto &[model_inputs, model_outputs] = tensors_info;
+
+    logger::info << "Model inputs:" << logger::endl;
+    for (const auto &input : model_inputs) {
+        logger::info << "\t" << input.name << ": " << utils::get_precision_str(utils::get_data_precision(input.type))
+                     << " " << args::shape_string(input.shape) << logger::endl;
+    }
+    logger::info << "Model outputs:" << logger::endl;
+    for (const auto &output : model_outputs) {
+        logger::info << "\t" << output.name << ": " << utils::get_precision_str(utils::get_data_precision(output.type))
+                     << " " << args::shape_string(output.shape) << logger::endl;
     }
 }
 
@@ -153,7 +170,7 @@ int main(int argc, char *argv[]) {
             }
         }
     }
-    auto input_files = parse_input_files_arguments(gflags::GetArgvs());
+    auto input_files = args::parse_input_files_arguments(gflags::GetArgvs());
 
     log_step(); // Loading ONNX Runtime
     logger::info << "ONNX Runtime version: " << OrtGetApiBase()->GetVersionString() << logger::endl;

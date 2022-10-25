@@ -1,7 +1,6 @@
 #include "args_handler.hpp"
 
 #include "logger.hpp"
-#include "onnxruntime_model.hpp"
 
 #include <algorithm>
 #include <exception>
@@ -13,7 +12,7 @@
 #include <string>
 #include <vector>
 
-std::vector<std::string> split(const std::string &s, char delim) {
+std::vector<std::string> args::split(const std::string &s, char delim) {
     std::vector<std::string> result;
     std::stringstream ss(s);
     std::string item;
@@ -85,8 +84,8 @@ std::pair<std::string, std::vector<std::string>> parse_input_files_per_input(con
     return {input_name, file_paths};
 }
 
-std::map<std::string, std::vector<std::string>> parse_input_files_arguments(const std::vector<std::string> &args,
-                                                                            size_t max_files) {
+std::map<std::string, std::vector<std::string>> args::parse_input_files_arguments(const std::vector<std::string> &args,
+                                                                                  size_t max_files) {
     std::map<std::string, std::vector<std::string>> mapped_files = {};
     auto args_it = begin(args);
     const auto is_image_arg = [](const std::string &s) {
@@ -144,7 +143,7 @@ std::map<std::string, std::vector<std::string>> parse_input_files_arguments(cons
 }
 
 // Parse parameter string like "input0[value0],input1[value1]" or "[value]" into map
-std::map<std::string, std::string> parse_shape_or_layout_string(const std::string &parameter_string) {
+std::map<std::string, std::string> args::parse_shape_layout_string(const std::string &parameter_string) {
     std::map<std::string, std::string> return_value;
     std::string search_string = parameter_string;
     auto start_pos = search_string.find_first_of('[');
@@ -167,10 +166,12 @@ std::map<std::string, std::string> parse_shape_or_layout_string(const std::strin
         }
 
         search_string = search_string.substr(end_pos + 1);
-        if (search_string.empty() || (search_string.front() != ',' && search_string.front() != '['))
+        if (search_string.empty() || (search_string.front() != ',' && search_string.front() != '[')) {
             break;
-        if (search_string.front() == ',')
+        }
+        if (search_string.front() == ',') {
             search_string = search_string.substr(1);
+        }
         start_pos = search_string.find_first_of('[');
     }
 
@@ -181,17 +182,44 @@ std::map<std::string, std::string> parse_shape_or_layout_string(const std::strin
     return return_value;
 }
 
-void log_model_inputs_outputs(const IOTensorsInfo &tensors_info) {
-    const auto &[model_inputs, model_outputs] = tensors_info;
+// Parse parameter string like "input0[255,255,255],input1[255,255,255]" or "[255,255,255]" into map
+std::map<std::string, std::vector<float>> args::parse_mean_scale_string(const std::string &parameter_string) {
+    std::map<std::string, std::vector<float>> return_value;
+    std::string search_string = parameter_string;
 
-    logger::info << "Model inputs:" << logger::endl;
-    for (const auto &input : model_inputs) {
-        logger::info << "\t" << input.name << ": " << utils::get_precision_str(utils::get_data_precision(input.type))
-                     << " " << shape_string(input.shape) << logger::endl;
+    auto start_pos = search_string.find_first_of('[');
+    auto input_name = search_string.substr(0, start_pos);
+    while (start_pos != std::string::npos) {
+        auto end_pos = search_string.find_first_of(']');
+        if (end_pos == std::string::npos) {
+            break;
+        }
+        if (start_pos) {
+            input_name = search_string.substr(0, start_pos);
+        }
+
+        auto input_value = string_to_vec<float>(search_string.substr(start_pos + 1, end_pos - start_pos - 1), ',');
+
+        if (!input_name.empty()) {
+            return_value[input_name] = input_value;
+        }
+        else {
+            return_value[""] = input_value;
+        }
+
+        search_string = search_string.substr(end_pos + 1);
+        if (search_string.empty() || (search_string.front() != ',' && search_string.front() != '[')) {
+            break;
+        }
+        if (search_string.front() == ',') {
+            search_string = search_string.substr(1);
+        }
+        start_pos = search_string.find_first_of('[');
     }
-    logger::info << "Model outputs:" << logger::endl;
-    for (const auto &output : model_outputs) {
-        logger::info << "\t" << output.name << ": " << utils::get_precision_str(utils::get_data_precision(output.type))
-                     << " " << shape_string(output.shape) << logger::endl;
+
+    if (!search_string.empty()) {
+        throw std::invalid_argument("Can't parse input parameter string: " + parameter_string);
     }
+
+    return return_value;
 }

@@ -12,8 +12,9 @@
 struct InputDescr {
     ONNXTensorDescr tensor_descr;
     std::vector<std::string> files;
-    std::vector<float> mean;
-    std::vector<float> scale;
+    std::vector<float> mean = {0.f, 0.f, 0.f};
+    std::vector<float> scale = {1.f, 1.f, 1.f};
+    ;
 };
 
 using InputsInfo = std::map<std::string, InputDescr>;

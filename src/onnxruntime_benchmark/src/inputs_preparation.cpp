@@ -275,7 +275,7 @@ std::vector<std::vector<Ort::Value>> get_input_tensors(const InputsInfo &inputs_
             const auto &tensor_descr = input_descr.tensor_descr;
             logger::info << " \t" << name << " (" << tensor_descr.layout << " "
                          << utils::get_precision_str(utils::get_data_precision(tensor_descr.type)) << " "
-                         << shape_string(tensor_descr.shape) << ")" << logger::endl;
+                         << args::shape_string(tensor_descr.shape) << ")" << logger::endl;
 
             if (!input_descr.files.empty() && static_cast<int>(input_descr.files.size()) < batch_size) {
                 logger::warn << "\tNumber of input files is less than batch size. Some files will be duplicated."
@@ -310,25 +310,25 @@ InputsInfo get_inputs_info(const std::map<std::string, std::vector<std::string>>
                            const std::string &mean_string,
                            const std::string &scale_string) {
     // parse input layouts and input shapes
-    std::map<std::string, std::string> input_layouts = parse_shape_or_layout_string(layout_string);
+    std::map<std::string, std::string> input_layouts = args::parse_shape_layout_string(layout_string);
     std::map<std::string, std::vector<int64_t>> input_shapes;
-    for (const auto &[input_name, shape] : parse_shape_or_layout_string(shape_string)) {
-        input_shapes.emplace(input_name, string_to_vec<long>(shape, ','));
+    for (const auto &[input_name, shape] : args::parse_shape_layout_string(shape_string)) {
+        input_shapes.emplace(input_name, args::string_to_vec<long>(shape, ','));
     }
 
-    // parse mean and scale
-    std::vector<float> mean = {0.f, 0.f, 0.f};
-    if (!mean_string.empty()) {
-        mean = string_to_vec<float>(mean_string, ' ');
-        if (mean.size() != 3) {
+    // parse mean and check
+    std::map<std::string, std::vector<float>> means = args::parse_mean_scale_string(mean_string);
+    for (const auto &[input_name, input_mean] : means) {
+        if (input_mean.size() != 3) {
             throw std::logic_error("Mean must have 3 values, one value per channel, but given: " + mean_string);
         }
     }
-    std::vector<float> scale = {1.f, 1.f, 1.f};
-    if (!scale_string.empty()) {
-        scale = string_to_vec<float>(scale_string, ' ');
-        if (scale.size() != 3) {
-            throw std::logic_error("Scale must have 3 values, one value per channel, bug given: " + scale_string);
+
+    // parse scale and check
+    std::map<std::string, std::vector<float>> scales = args::parse_mean_scale_string(scale_string);
+    for (const auto &[input_name, input_scale] : scales) {
+        if (input_scale.size() != 3) {
+            throw std::logic_error("Scale must have 3 values, one value per channel, but given: " + mean_string);
         }
     }
 
@@ -392,8 +392,32 @@ InputsInfo get_inputs_info(const std::map<std::string, std::vector<std::string>>
             }
         }
 
-        input_descr.mean = mean;
-        input_descr.scale = scale;
+        if (!means.empty()) {
+            if (means.count(name) > 0) {
+                input_descr.mean = means.at(name);
+            }
+            if (means.count("") > 0 && means.size() == 1) {
+                input_descr.mean = means.at("");
+            }
+            else if (means.size() > 1) {
+                throw std::invalid_argument("Input name " + name +
+                                            " not found in the names provided with -mean argument.");
+            }
+        }
+
+        if (!scales.empty()) {
+            if (scales.count(name) > 0) {
+                input_descr.scale = scales.at(name);
+            }
+            if (scales.count("") > 0 && scales.size() == 1) {
+                input_descr.scale = scales.at("");
+            }
+            else if (scales.size() > 1) {
+                throw std::invalid_argument("Input name " + name +
+                                            " not found in the names provided with -scales argument.");
+            }
+        }
+
         input_info.emplace(name, input_descr);
     }
 
