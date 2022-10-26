@@ -238,7 +238,7 @@ int main(int argc, char *argv[]) {
         log_step(); // Creating input tensors
         auto tensors = inputs::get_input_tensors(inputs_info, batch_size, num_requests);
 
-        log_step("inference requests, limits: " +
+        log_step(std::to_string(num_requests) + " inference requests, limits: " +
                  (num_iterations > 0
                       ? std::to_string(num_iterations) + " iterations"
                       : std::to_string(utils::sec_to_ms(time_limit_sec)) + " ms")); // Measuring model performance

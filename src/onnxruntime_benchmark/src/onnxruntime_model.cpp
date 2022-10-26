@@ -147,7 +147,7 @@ void ONNXModel::reset_timers() {
     latencies.clear();
 }
 
-std::vector<double> ONNXModel::get_latencies() {
+std::vector<double> ONNXModel::get_latencies() const {
     return latencies;
 }
 

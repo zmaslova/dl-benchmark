@@ -25,7 +25,7 @@ utils::DataPrecision utils::get_data_precision(ONNXTensorElementDataType type) {
 }
 
 std::string utils::get_precision_str(DataPrecision p) {
-    for (auto &[key, val] : precision_to_str_map) {
+    for (const auto &[key, val] : precision_to_str_map) {
         if (val == p) {
             return key;
         }

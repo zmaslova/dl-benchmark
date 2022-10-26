@@ -65,7 +65,7 @@ public:
     ONNXModel(int nthreads);
     void fill_inputs_outputs_info();
     IOTensorsInfo get_io_tensors_info() const;
-    std::vector<double> get_latencies();
+    std::vector<double> get_latencies() const;
     double get_total_time_ms() const;
     void read_model(const std::string &model);
     void reset_timers();
