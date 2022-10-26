@@ -155,7 +155,7 @@ python3 inference_benchmark.py \
     --executor_type docker_container
 ```
 
-## Using OpenVINO Benchmark C++ tool as inference launcher 
+## Использование OpenVINO Benchmark C++ tool в качестве инструмента для замеров
 
 ### Сборка (linux)
 
@@ -200,9 +200,9 @@ source INSTALL_DIR/setupvars.sh
 python3 inference_benchmark.py -c <path_to_benchmark_configuration_file.xml> -r result.csv -b /home/<user>/inference_engine_cpp_samples_build/intel64/Release/benchmark_app
 ```
 
-## Using OpenVINO Benchmark Python tool as inference launcher
+## Использование OpenVINO Benchmark Python tool в качестве инструмента для замеров
 
-## Установка
+### Установка
 1. В случае использования стабильной версии, установить python wheels из pypi хранилища.
 ```bash
 
@@ -215,7 +215,7 @@ pip install openvino_dev
 pip install openvino_dev[mxnet,caffe,caffe2,onnx,pytorch,tensorflow2]==<your version, ex 2022.1.0>
 ```
 
-## Использование
+### Использование
 
 1. В конфигурационном файле, секция FrameworkDependent укажите Mode ovbenchmark_python_latency или ovbenchmark_python_throughput
 
