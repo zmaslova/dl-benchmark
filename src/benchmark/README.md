@@ -188,7 +188,7 @@ source INSTALL_DIR/setupvars.sh
 5. В директории INSTALL_DIR/samples/cpp запустите ./build_samples.sh.
 
 ### Использование
-1. В конфигурационном файле, секция FrameworkDependent укажите Mode ovbenchmark_cpp_latency или ovbenchmark_cpp_throughput
+1. В конфигурационном файле (секция `FrameworkDependent`) укажите `Mode`: `ovbenchmark_cpp_latency` или `ovbenchmark_cpp_throughput`
 
 
 2. Найдите исполняемый файл benchmark_app по адресу:
@@ -217,7 +217,7 @@ pip install openvino_dev[mxnet,caffe,caffe2,onnx,pytorch,tensorflow2]==<your ver
 
 ### Использование
 
-1. В конфигурационном файле, секция FrameworkDependent укажите Mode ovbenchmark_python_latency или ovbenchmark_python_throughput
+1. В конфигурационном файле (секция `FrameworkDependent`) укажите `Mode`: `ovbenchmark_python_latency` или `ovbenchmark_python_throughput`
 
 2. Запустите скрипт
 ```bash
