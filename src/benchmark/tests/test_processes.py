@@ -70,9 +70,11 @@ def test_framework_wrapper(inference_framework, mode, mocker):
     wrapper = WRAPPER_REGISTRY[inference_framework[0]]
     mocker.patch('os.path.exists', return_value=True)
     if inference_framework[0] == KnownFrameworks.openvino_dldt:
-        assert isinstance(wrapper.create_process(test, None, log, 'valid/benchmark/path'), mode[1])
+        assert isinstance(wrapper.create_process(test, get_host_executor(mocker), log, 'valid/benchmark/path'),
+                          mode[1])
     else:
-        assert isinstance(wrapper.create_process(test, None, log, 'valid/benchmark/path'), inference_framework[1])
+        assert isinstance(wrapper.create_process(test, get_host_executor(mocker), log, 'valid/benchmark/path'),
+                          inference_framework[1])
 
 
 def test_get_openvino_benchmark_app_metrics(mocker):
