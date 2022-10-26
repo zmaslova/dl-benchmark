@@ -219,7 +219,10 @@ pip install openvino_dev[mxnet,caffe,caffe2,onnx,pytorch,tensorflow2]==<your ver
 
 1. В конфигурационном файле, секция FrameworkDependent укажите Mode ovbenchmark_python_latency или ovbenchmark_python_throughput
 
-
+2. Запустите скрипт
+```bash
+python3 inference_benchmark.py -c <path_to_benchmark_configuration_file.xml> -r result.csv
+```
 
 <!-- LINKS -->
 [openvino-toolkit]: https://software.intel.com/en-us/openvino-toolkit
