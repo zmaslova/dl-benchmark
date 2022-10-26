@@ -185,7 +185,7 @@ pip install openvino_dev[mxnet,caffe,caffe2,onnx,pytorch,tensorflow2]==<your ver
 source INSTALL_DIR/setupvars.sh 
 ```
 
-5. В директории openvino/samples/cpp запустите build_samples.sh.
+5. В директории INSTALL_DIR/samples/cpp запустите ./build_samples.sh.
 
 ### Использование
 1. В конфигурационном файле, секция FrameworkDependent укажите Mode ovbenchmark_cpp_latency или ovbenchmark_cpp_throughput
