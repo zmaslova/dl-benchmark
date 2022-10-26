@@ -18,6 +18,7 @@ using HighresClock = std::chrono::high_resolution_clock;
 struct ONNXTensorDescr {
     std::string name;
     std::vector<int64_t> shape;
+    std::vector<int64_t> data_shape;
     std::string layout;
     ONNXTensorElementDataType type;
 

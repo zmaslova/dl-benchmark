@@ -54,11 +54,13 @@ Ort::Value create_random_tensor(const inputs::InputDescr &input_descr,
     auto tensor_descr = input_descr.tensor_descr;
 
     auto allocator = Ort::AllocatorWithDefaultOptions();
-    auto tensor =
-        Ort::Value::CreateTensor(allocator, tensor_descr.shape.data(), tensor_descr.shape.size(), tensor_descr.type);
+    auto tensor = Ort::Value::CreateTensor(allocator,
+                                           tensor_descr.data_shape.data(),
+                                           tensor_descr.data_shape.size(),
+                                           tensor_descr.type);
     auto tensor_data = tensor.GetTensorMutableData<T>();
     int64_t tensor_size =
-        std::accumulate(tensor_descr.shape.begin(), tensor_descr.shape.end(), 1, std::multiplies<int64_t>());
+        std::accumulate(tensor_descr.data_shape.begin(), tensor_descr.data_shape.end(), 1, std::multiplies<int64_t>());
 
     std::mt19937 gen(0);
     UniformDistribution<T2> distribution(rand_min, rand_max);
@@ -74,13 +76,15 @@ Ort::Value create_tensor_from_image(const inputs::InputDescr &input_descr, int b
     const auto &files = input_descr.files;
 
     auto allocator = Ort::AllocatorWithDefaultOptions();
-    auto tensor =
-        Ort::Value::CreateTensor(allocator, tensor_descr.shape.data(), tensor_descr.shape.size(), tensor_descr.type);
+    auto tensor = Ort::Value::CreateTensor(allocator,
+                                           tensor_descr.data_shape.data(),
+                                           tensor_descr.data_shape.size(),
+                                           tensor_descr.type);
     auto tensor_data = tensor.GetTensorMutableData<T>();
 
-    size_t channels = tensor_descr.shape[1];
-    size_t width = tensor_descr.shape[2];
-    size_t height = tensor_descr.shape[3];
+    size_t channels = tensor_descr.channels();
+    size_t width = tensor_descr.width();
+    size_t height = tensor_descr.height();
 
     for (int b = 0; b < batch_size; ++b) {
         const auto &file_path = files[(start_index + b) % files.size()];
@@ -104,11 +108,13 @@ Ort::Value create_image_info_tensor(const inputs::InputDescr &input_descr, const
     auto tensor_descr = input_descr.tensor_descr;
 
     auto allocator = Ort::AllocatorWithDefaultOptions();
-    auto tensor =
-        Ort::Value::CreateTensor(allocator, tensor_descr.shape.data(), tensor_descr.shape.size(), tensor_descr.type);
+    auto tensor = Ort::Value::CreateTensor(allocator,
+                                           tensor_descr.data_shape.data(),
+                                           tensor_descr.data_shape.size(),
+                                           tensor_descr.type);
 
     size_t tensor_size =
-        std::accumulate(tensor_descr.shape.begin(), tensor_descr.shape.end(), 1, std::multiplies<int64_t>());
+        std::accumulate(tensor_descr.data_shape.begin(), tensor_descr.data_shape.end(), 1, std::multiplies<int64_t>());
 
     auto tensor_data = tensor.GetTensorMutableData<T>();
     logger::info << "\t\t" << image_size.width << "x" << image_size.height << logger::endl;
@@ -136,11 +142,13 @@ Ort::Value create_tensor_from_binary(const inputs::InputDescr &input_descr, int 
     const auto &files = input_descr.files;
 
     auto allocator = Ort::AllocatorWithDefaultOptions();
-    auto tensor =
-        Ort::Value::CreateTensor(allocator, tensor_descr.shape.data(), tensor_descr.shape.size(), tensor_descr.type);
+    auto tensor = Ort::Value::CreateTensor(allocator,
+                                           tensor_descr.data_shape.data(),
+                                           tensor_descr.data_shape.size(),
+                                           tensor_descr.type);
 
     size_t tensor_size =
-        std::accumulate(tensor_descr.shape.begin(), tensor_descr.shape.end(), 1, std::multiplies<int64_t>());
+        std::accumulate(tensor_descr.data_shape.begin(), tensor_descr.data_shape.end(), 1, std::multiplies<int64_t>());
 
     auto tensor_data = tensor.GetTensorMutableData<char>();
     for (int b = 0; b < batch_size; ++b) {
@@ -277,7 +285,7 @@ std::vector<std::vector<Ort::Value>> inputs::get_input_tensors(const inputs::Inp
             const auto &tensor_descr = input_descr.tensor_descr;
             logger::info << " \t" << name << " (" << tensor_descr.layout << " "
                          << utils::get_precision_str(utils::get_data_precision(tensor_descr.type)) << " "
-                         << args::shape_string(tensor_descr.shape) << ")" << logger::endl;
+                         << args::shape_string(tensor_descr.data_shape) << ")" << logger::endl;
 
             if (!input_descr.files.empty() && static_cast<int>(input_descr.files.size()) < batch_size) {
                 logger::warn << "\tNumber of input files is less than batch size. Some files will be duplicated."
@@ -341,7 +349,8 @@ inputs::InputsInfo inputs::get_inputs_info(const std::map<std::string, std::vect
         return tensor_descr.is_dynamic();
     });
     bool is_dynamic_batch = std::any_of(model_inputs.begin(), model_inputs.end(), [](const auto &tensor_descr) {
-        return tensor_descr.shape[0] == -1;
+        return tensor_descr.shape[0] == -1; // by this moment we don't have a layout for tensor, so we have to assume
+                                            // that batch value is shape[0]
     });
 
     if (is_dynamic_input && !is_dynamic_batch && input_shapes.empty()) {
@@ -365,13 +374,13 @@ inputs::InputsInfo inputs::get_inputs_info(const std::map<std::string, std::vect
             throw std::invalid_argument("Input name " + name + " not found in the names provided with -i argument.");
         }
 
-        auto &shape = tensor_descr.shape;
+        auto &data_shape = tensor_descr.data_shape;
         if (!input_shapes.empty() && is_dynamic_input) {
             if (input_shapes.count(name) > 0) {
-                shape = input_shapes.at(name);
+                data_shape = input_shapes.at(name);
             }
             else if (input_shapes.count("") > 0 && input_shapes.size() == 1) { // handle case without specifying name
-                shape = input_shapes.at("");
+                data_shape = input_shapes.at("");
             }
             else if (input_shapes.size() > 1) {
                 throw std::invalid_argument("Input name " + name +
@@ -428,7 +437,7 @@ inputs::InputsInfo inputs::get_inputs_info(const std::map<std::string, std::vect
     if (input_layouts.empty()) {
         logger::warn << "Layout will be detected automatically, as it wasn't provided explicitly." << logger::endl;
         for (auto &[name, input_descr] : input_info) {
-            input_descr.tensor_descr.layout = utils::guess_layout_from_shape(input_descr.tensor_descr.shape);
+            input_descr.tensor_descr.layout = utils::guess_layout_from_shape(input_descr.tensor_descr.data_shape);
         }
     }
     return input_info;
@@ -447,9 +456,9 @@ int inputs::get_batch_size(const inputs::InputsInfo &inputs_info) {
         std::size_t batch_index = tensor_descr.layout.find("N");
         if (batch_index != std::string::npos) {
             if (batch_size == 0) {
-                batch_size = tensor_descr.shape[batch_index];
+                batch_size = tensor_descr.data_shape[batch_index];
             }
-            else if (batch_size != tensor_descr.shape[batch_index]) {
+            else if (batch_size != tensor_descr.data_shape[batch_index]) {
                 throw std::logic_error("Batch size is different for different inputs!");
             }
         }

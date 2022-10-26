@@ -183,12 +183,20 @@ int main(int argc, char *argv[]) {
                                                    FLAGS_shape,
                                                    FLAGS_mean,
                                                    FLAGS_scale);
+
         // determine batch size
         int batch_size = inputs::get_batch_size(inputs_info);
-        if (batch_size == -1 && FLAGS_b > 0) {
+        bool is_dynamic_batch = std::any_of(inputs_info.begin(), inputs_info.end(), [](const auto &pair) {
+            const auto &[name, input_descr] = pair;
+            return input_descr.tensor_descr.is_dynamic_batch();
+        });
+        if (FLAGS_b > 0 && is_dynamic_batch) {
+            if (!FLAGS_shape.empty() && batch_size != -1) {
+                logger::warn << "Batch size provided with -b option will be used." << logger::endl;
+            }
             batch_size = FLAGS_b;
         }
-        else if (batch_size == -1) {
+        else if (is_dynamic_batch && batch_size == -1) {
             throw std::logic_error("Model has dynamic batch size, but -b option wasn't provided.");
         }
         else if (FLAGS_b > 0) {
