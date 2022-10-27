@@ -79,7 +79,7 @@ class OpenVINOBenchmarkPythonProcess(OpenVINOBenchmarkProcess):
 
         nthreads = self._test.dep_parameters.nthreads
         if nthreads:
-            arguments = self.__add_nthreads_for_cmd_line(arguments, nthreads)
+            arguments = self._add_argument_to_cmd_line(arguments, '-nthreads', nthreads)
 
         arguments = self._add_perf_hint_for_cmd_line(arguments, self._perf_hint)
 
@@ -115,7 +115,7 @@ class OpenVINOBenchmarkCppProcess(OpenVINOBenchmarkProcess):
 
         nthreads = self._test.dep_parameters.nthreads
         if nthreads:
-            arguments = self.__add_nthreads_for_cmd_line(arguments, nthreads)
+            arguments = self._add_argument_to_cmd_line(arguments, '-nthreads', nthreads)
 
         arguments = self._add_perf_hint_for_cmd_line(arguments, self._perf_hint)
 
