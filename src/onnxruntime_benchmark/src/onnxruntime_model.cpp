@@ -20,7 +20,7 @@ bool ONNXTensorDescr::is_image() const {
 }
 
 bool ONNXTensorDescr::is_image_info() const {
-    return layout == "NC" && channels() >= 2;
+    return (layout.size() == 2 && layout.back() == 'C') && channels() >= 2;
 }
 
 bool ONNXTensorDescr::is_dynamic() const {
