@@ -14,8 +14,7 @@ then
     [[ ! -f lfw-a.tgz ]] && wget http://vis-www.cs.umass.edu/lfw/lfw-a.tgz
     tar -xf lfw-a.tgz
 fi
-mkdir annotation
-cd annotation
+mkdir -p annotation && cd annotation
 wget http://vis-www.cs.umass.edu/lfw/pairs.txt -O pairs.txt.bak
 grep -E '^A[[:graph:]]+[[:space:]][[:digit:]]+[[:space:]][[:digit:]]+' pairs.txt.bak > pairs.txt
 wget https://raw.githubusercontent.com/clcarwin/sphereface_pytorch/master/data/lfw_landmark.txt -O lfw_landmark.txt.bak
