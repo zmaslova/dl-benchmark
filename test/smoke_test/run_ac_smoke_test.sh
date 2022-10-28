@@ -8,10 +8,7 @@ omz_converter  --output_dir working_dir_smoke --download_dir working_dir_smoke -
 # prepare reduced LFW dataset (only people with name starting with A)
 root_folder="$PWD"
 [ -f lfw.pickle ] && rm lfw.pickle
-mkdir datasets_smoke 
-cd datasets_smoke
-mkdir LFW 
-cd LFW
+mkdir -p datasets_smoke/LFW && cd datasets_smoke/LFW
 if [[ ! -d lfw ]]
 then
     [[ ! -f lfw-a.tgz ]] && wget http://vis-www.cs.umass.edu/lfw/lfw-a.tgz
