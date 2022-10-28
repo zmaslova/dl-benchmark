@@ -396,7 +396,7 @@ inputs::InputsInfo inputs::get_inputs_info(const std::map<std::string, std::vect
             if (input_layouts.count(name) > 0) {
                 layout = input_layouts.at(name);
             }
-            if (input_layouts.count("") > 0 && input_layouts.size() == 1) {
+            else if (input_layouts.count("") > 0 && input_layouts.size() == 1) {
                 layout = input_layouts.at("");
             }
             else if (input_layouts.size() > 1) {

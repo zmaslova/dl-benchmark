@@ -26,7 +26,6 @@ add_executable(${PROJECT_NAME} ${sources} ${headers})
 
 target_include_directories(${PROJECT_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/include" ${ORT_INCLUDE})
 
-message(STATUS ${OpenCV_LIBRARIES})
 target_link_libraries(${PROJECT_NAME} PRIVATE gflags nlohmann_json::nlohmann_json ${OpenCV_LIBRARIES} ${ORT_LIBRARIES})
 
 set_target_properties(${PROJECT_NAME} PROPERTIES CXX_STANDARD 17 LINKER_LANGUAGE CXX)
