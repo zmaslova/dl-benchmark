@@ -6,10 +6,10 @@ from csv_wrapper import CsvReport  # noqa: E402
 
 
 class OutputHandler:
-    def __init__(self, table_name):
+    def __init__(self, table_name, csv_delimiter):
         self.__table_name = table_name
 
-        self._header_long_names = {
+        self._column_names = {
             'status': 'Status',
             'task': 'Task type',
             'model': 'Topology name',
@@ -23,7 +23,7 @@ class OutputHandler:
             'accuracy': 'Accuracy',
         }
 
-        self._report = CsvReport(self.__table_name, self._header_long_names.values())
+        self._report = CsvReport(self.__table_name, self._column_names.values(), output_delimiter=csv_delimiter)
 
     def create_table(self):
         self._report.write_headers()
@@ -35,5 +35,5 @@ class OutputHandler:
             result_dict = result.get_result_dict()
             result_dict['hardware'] = hardware_info
 
-            row_dict = {long_name: result_dict[dict_name] for dict_name, long_name in self._header_long_names.items()}
+            row_dict = {column_name: result_dict[key] for key, column_name in self._column_names.items()}
             self._report.append_row(row_dict)

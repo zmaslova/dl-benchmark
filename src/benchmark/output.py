@@ -6,10 +6,10 @@ from csv_wrapper import CsvReport  # noqa: E402
 
 
 class OutputHandler:
-    def __init__(self, table_name):
+    def __init__(self, table_name, csv_delimiter):
         self.__table_name = table_name
 
-        self._header_long_names = {
+        self._column_names = {
             'status': 'Status',
             'task': 'Task type',
             'model': 'Topology name',
@@ -27,7 +27,7 @@ class OutputHandler:
             'fps': 'FPS',
         }
 
-        self._report = CsvReport(self.__table_name, self._header_long_names.values())
+        self._report = CsvReport(self.__table_name, self._column_names.values(), output_delimiter=csv_delimiter)
 
     @staticmethod
     def __create_table_row(executor, test, process):
@@ -43,5 +43,5 @@ class OutputHandler:
 
     def add_row_to_table(self, executor, test, process):
         report_row = self.__create_table_row(executor, test, process)
-        row_dict = {long_name: report_row[dict_name] for dict_name, long_name in self._header_long_names.items()}
+        row_dict = {column_name: report_row[key] for key, column_name in self._column_names.items()}
         self._report.append_row(row_dict)
