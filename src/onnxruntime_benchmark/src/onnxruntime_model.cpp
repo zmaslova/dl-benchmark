@@ -72,7 +72,7 @@ void ONNXModel::read_model(const std::string &model_path) {
     env = std::make_shared<Ort::Env>(ORT_LOGGING_LEVEL_ERROR, "ORT Bench");
     Ort::SessionOptions session_options;
     session_options.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_ALL);
-    session_options.SetExecutionMode(ExecutionMode::ORT_PARALLEL); // Parallel
+    session_options.SetExecutionMode(ExecutionMode::ORT_SEQUENTIAL);
     if (nthreads > 0) {
         session_options.SetIntraOpNumThreads(nthreads);
     }
