@@ -52,7 +52,8 @@ std::vector<T> string_to_vec(const std::string &str, const char delim) {
                 res.push_back(v);
             }
             else {
-                static_assert(!sizeof(T), "No match template argument for this function");
+                static_assert(!sizeof(T), "No match template argument for this function."
+                                          "Available types for argument are float, double, int, long and string");
             }
         }
     } catch (const std::invalid_argument &) {

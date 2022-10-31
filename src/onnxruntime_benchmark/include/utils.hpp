@@ -36,7 +36,8 @@ static const std::map<ONNXTensorElementDataType, DataPrecision> onnx_dtype_to_pr
     {ONNX_TENSOR_ELEMENT_DATA_TYPE_INT32, DataPrecision::S32},
     {ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64, DataPrecision::S64},
     {ONNX_TENSOR_ELEMENT_DATA_TYPE_BOOL, DataPrecision::BOOL},
-    {ONNX_TENSOR_ELEMENT_DATA_TYPE_UNDEFINED, DataPrecision::UNKNOWN}};
+    {ONNX_TENSOR_ELEMENT_DATA_TYPE_UNDEFINED, DataPrecision::UNKNOWN}
+};
 
 static const std::map<std::string, DataPrecision> precision_to_str_map = {
     {"FP32", DataPrecision::FP32},

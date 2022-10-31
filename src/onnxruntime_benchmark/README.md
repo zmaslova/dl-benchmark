@@ -86,7 +86,7 @@ Options:
 ### Basic usage
 To run tool with default options you should provide only path to model file in `.onnx` format
 ```
-./benchmark_app -m model.onnx
+./onnxruntime_benchmark -m model.onnx
 ```
 By default, the application makes inference on randomly-generated tensors for 60 seconds. For inference only default provider (`CPU` device) is available for now.
 
@@ -112,7 +112,7 @@ Or if all inputs have the same shape you could pass just `-shape [N,C]`. The sam
 ### Report
 To save a report with tool configuration and performance results specify `-save_report` flag:
 ```
-./benchmark_app -m model.onnx -save_report -report_path report/report.json
+./onnxruntime_benchmark -m model.onnx -save_report -report_path report/report.json
 ```
 if `-report_path` isn't provided, it will be saved in the current directory under `ort_benchmark.json` name.
 
@@ -183,5 +183,3 @@ Below is a sample output of the tool from the terminal:
 [ INFO ]        Max:     84.00 ms
 [ INFO ] Throughput: 29.06 FPS
 ```
-
-

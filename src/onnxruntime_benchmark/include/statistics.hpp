@@ -18,6 +18,6 @@ public:
     } latency;
     double fps = 0;
 
-    Metrics() {}
+    Metrics() = default;
     Metrics(const std::vector<double> &latencies, int batch_size, int percentile_boundary = 50);
 };

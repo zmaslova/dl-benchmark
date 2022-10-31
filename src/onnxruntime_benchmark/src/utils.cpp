@@ -20,7 +20,7 @@ utils::DataPrecision utils::get_data_precision(ONNXTensorElementDataType type) {
         return onnx_dtype_to_precision_map.at(type);
     }
     else {
-        throw std::invalid_argument("does not support element type " + std::to_string(type));
+        throw std::invalid_argument("Does not support element type " + std::to_string(type));
     }
 }
 
