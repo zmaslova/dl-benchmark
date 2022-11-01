@@ -68,8 +68,7 @@ int64_t ONNXTensorDescr::height() const {
 ONNXModel::ONNXModel(int nthreads) : nthreads(nthreads) {}
 
 void ONNXModel::read_model(const std::string &model_path) {
-
-    env = std::make_shared<Ort::Env>(ORT_LOGGING_LEVEL_ERROR, "ORT Bench");
+    env = std::make_shared<Ort::Env>(ORT_LOGGING_LEVEL_ERROR, "ORT Benchmark");
     Ort::SessionOptions session_options;
     session_options.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_ALL);
     session_options.SetExecutionMode(ExecutionMode::ORT_SEQUENTIAL);
