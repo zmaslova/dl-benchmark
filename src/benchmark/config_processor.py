@@ -67,18 +67,17 @@ class TestConfigParser:
     def parse_independent_parameters(self, curr_test):
         CONFIG_FRAMEWORK_INDEPENDENT_TAG = 'FrameworkIndependent'
         CONFIG_FRAMEWORK_INDEPENDENT_INFERENCE_FRAMEWORK_TAG = 'InferenceFramework'
-        CONFIG_FRAMEWORK_INDEPENDENT_BATCH_SIZE_TAG = 'BatchSize'
         CONFIG_FRAMEWORK_INDEPENDENT_DEVICE_TAG = 'Device'
         CONFIG_FRAMEWORK_INDEPENDENT_ITERATION_COUNT_TAG = 'IterationCount'
         CONFIG_FRAMEWORK_INDEPENDENT_TEST_TIME_LIMIT_TAG = 'TestTimeLimit'
 
         indep_parameters_tag = curr_test.getElementsByTagName(CONFIG_FRAMEWORK_INDEPENDENT_TAG)[0]
+        _batch_size = indep_parameters_tag.getElementsByTagName('BatchSize')[0].firstChild
 
         return FrameworkIndependentParameters(
             inference_framework=indep_parameters_tag.getElementsByTagName(
                 CONFIG_FRAMEWORK_INDEPENDENT_INFERENCE_FRAMEWORK_TAG)[0].firstChild.data,
-            batch_size=indep_parameters_tag.getElementsByTagName(
-                CONFIG_FRAMEWORK_INDEPENDENT_BATCH_SIZE_TAG)[0].firstChild.data,
+            batch_size=_batch_size.data if _batch_size else None,
             device=indep_parameters_tag.getElementsByTagName(
                 CONFIG_FRAMEWORK_INDEPENDENT_DEVICE_TAG)[0].firstChild.data,
             iterarion_count=indep_parameters_tag.getElementsByTagName(

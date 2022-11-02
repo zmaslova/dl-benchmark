@@ -41,11 +41,10 @@ class OnnxRuntimeProcess(ProcessHandler):
     def _fill_command_line(self):
         model = self._test.model.model
         dataset = self._test.dataset.path
-        batch = self._test.indep_parameters.batch_size
         iteration_count = self._test.indep_parameters.iteration
 
         arguments = f'-m {model} -i {dataset} -niter {iteration_count} -save_report -report_path {self._report_path}'
-        #arguments = f'-m {model} -i {dataset} -b {batch} -niter {iteration_count} -save_report -report_path {self._report_path}'
+        arguments = self._add_optional_argument_to_cmd_line(arguments, '-b', self._test.indep_parameters.batch_size)
 
         arguments = self._add_optional_argument_to_cmd_line(arguments, '-shape', self._test.dep_parameters.shape)
         arguments = self._add_optional_argument_to_cmd_line(arguments, '-layout', self._test.dep_parameters.layout)
