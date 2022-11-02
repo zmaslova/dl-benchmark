@@ -29,14 +29,12 @@ jobs:
           python -m pip install -r requirements.txt
           python -m pip install openvino-dev[caffe,tensorflow2]==2022.2.0
 
-      - name: Run smoke test for inference benchmark
-        run: cd test/smoke_test && ./run_bench_smoke_test.sh
-
-      - name: Run smoke test for accuracy checker
-        run: cd test/smoke_test && ./run_ac_smoke_test.sh
+      - name: Run smoke tests
+        run: cd test/smoke_test && ./run_bench_smoke_test.sh && ./run_ac_smoke_test.sh
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v3
+        if: failure()
         with:
           name: results
           path: test/smoke_test/results*.csv
