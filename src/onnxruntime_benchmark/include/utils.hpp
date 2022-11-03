@@ -21,9 +21,9 @@ enum class DataPrecision : unsigned int {
     FP32 = 0,
     FP16,
     U8,
-    S8,
-    S32,
-    S64,
+    I8,
+    I32,
+    I64,
     BOOL,
     UNKNOWN
 };
@@ -32,24 +32,21 @@ static const std::map<ONNXTensorElementDataType, DataPrecision> onnx_dtype_to_pr
     {ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT, DataPrecision::FP32},
     {ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT16, DataPrecision::FP16},
     {ONNX_TENSOR_ELEMENT_DATA_TYPE_UINT8, DataPrecision::U8},
-    {ONNX_TENSOR_ELEMENT_DATA_TYPE_INT8, DataPrecision::S8},
-    {ONNX_TENSOR_ELEMENT_DATA_TYPE_INT32, DataPrecision::S32},
-    {ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64, DataPrecision::S64},
+    {ONNX_TENSOR_ELEMENT_DATA_TYPE_INT8, DataPrecision::I8},
+    {ONNX_TENSOR_ELEMENT_DATA_TYPE_INT32, DataPrecision::I32},
+    {ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64, DataPrecision::I64},
     {ONNX_TENSOR_ELEMENT_DATA_TYPE_BOOL, DataPrecision::BOOL},
     {ONNX_TENSOR_ELEMENT_DATA_TYPE_UNDEFINED, DataPrecision::UNKNOWN}
 };
 
-static const std::map<std::string, DataPrecision> precision_to_str_map = {
-    {"FP32", DataPrecision::FP32},
-    {"FP16", DataPrecision::FP16},
-    {"U8", DataPrecision::U8},
-    {"S8", DataPrecision::S8},
-    {"S32", DataPrecision::S32},
-    {"S64", DataPrecision::S64},
-    {"INT8", DataPrecision::S8},
-    {"INT32", DataPrecision::S32},
-    {"INT64", DataPrecision::S64},
-    {"BOOL", DataPrecision::BOOL},
+static const std::map<DataPrecision, std::string> precision_to_str_map = {
+    {DataPrecision::FP32, "FP32"},
+    {DataPrecision::FP16, "FP16"},
+    {DataPrecision::U8, "U8"},
+    {DataPrecision::I8, "INT8"},
+    {DataPrecision::I32, "INT32"},
+    {DataPrecision::I64, "INT64"},
+    {DataPrecision::BOOL, "BOOL"}
 };
 
 DataPrecision get_data_precision(ONNXTensorElementDataType type);

@@ -58,9 +58,8 @@ Ort::Value create_random_tensor(const inputs::InputDescr &input_descr,
                                            tensor_descr.data_shape.data(),
                                            tensor_descr.data_shape.size(),
                                            tensor_descr.type);
-    auto tensor_data = tensor.GetTensorMutableData<T>();
-    int64_t tensor_size =
-        std::accumulate(tensor_descr.data_shape.begin(), tensor_descr.data_shape.end(), 1, std::multiplies<int64_t>());
+    auto* tensor_data = tensor.GetTensorMutableData<T>();
+    int64_t tensor_size = tensor.GetTensorTypeAndShapeInfo().GetElementCount();
 
     std::mt19937 gen(0);
     UniformDistribution<T2> distribution(rand_min, rand_max);
@@ -80,7 +79,7 @@ Ort::Value create_tensor_from_image(const inputs::InputDescr &input_descr, int b
                                            tensor_descr.data_shape.data(),
                                            tensor_descr.data_shape.size(),
                                            tensor_descr.type);
-    auto tensor_data = tensor.GetTensorMutableData<T>();
+    auto* tensor_data = tensor.GetTensorMutableData<T>();
 
     size_t channels = tensor_descr.channels();
     size_t width = tensor_descr.width();
@@ -106,17 +105,14 @@ Ort::Value create_tensor_from_image(const inputs::InputDescr &input_descr, int b
 template <class T>
 Ort::Value create_image_info_tensor(const inputs::InputDescr &input_descr, const cv::Size &image_size, int batch_size) {
     auto tensor_descr = input_descr.tensor_descr;
-
     auto allocator = Ort::AllocatorWithDefaultOptions();
     auto tensor = Ort::Value::CreateTensor(allocator,
                                            tensor_descr.data_shape.data(),
                                            tensor_descr.data_shape.size(),
                                            tensor_descr.type);
 
-    size_t tensor_size =
-        std::accumulate(tensor_descr.data_shape.begin(), tensor_descr.data_shape.end(), 1, std::multiplies<int64_t>());
-
-    auto tensor_data = tensor.GetTensorMutableData<T>();
+    size_t tensor_size = tensor.GetTensorTypeAndShapeInfo().GetElementCount();
+    auto* tensor_data = tensor.GetTensorMutableData<T>();
     logger::info << "\t\t" << image_size.width << "x" << image_size.height << logger::endl;
     for (int b = 0; b < batch_size; ++b) {
         int64_t image_info_size = tensor_size / batch_size;
@@ -140,17 +136,14 @@ template <class T>
 Ort::Value create_tensor_from_binary(const inputs::InputDescr &input_descr, int batch_size, int start_index) {
     auto tensor_descr = input_descr.tensor_descr;
     const auto &files = input_descr.files;
-
     auto allocator = Ort::AllocatorWithDefaultOptions();
     auto tensor = Ort::Value::CreateTensor(allocator,
                                            tensor_descr.data_shape.data(),
                                            tensor_descr.data_shape.size(),
                                            tensor_descr.type);
 
-    size_t tensor_size =
-        std::accumulate(tensor_descr.data_shape.begin(), tensor_descr.data_shape.end(), 1, std::multiplies<int64_t>());
-
-    auto tensor_data = tensor.GetTensorMutableData<char>();
+    size_t tensor_size = tensor.GetTensorTypeAndShapeInfo().GetElementCount();
+    auto* tensor_data = tensor.GetTensorMutableData<char>();
     for (int b = 0; b < batch_size; ++b) {
         size_t input_id = (start_index + b) % files.size();
         const auto &file_path = files[input_id];
@@ -191,10 +184,10 @@ Ort::Value get_tensor_from_image(const inputs::InputDescr &input_descr, int batc
     if (precision == utils::DataPrecision::FP32) {
         return create_tensor_from_image<float>(input_descr, batch_size, start_index);
     }
-    else if (precision == utils::DataPrecision::S32) {
+    else if (precision == utils::DataPrecision::I32) {
         return create_tensor_from_image<int32_t>(input_descr, batch_size, start_index);
     }
-    else if (precision == utils::DataPrecision::S64) {
+    else if (precision == utils::DataPrecision::I64) {
         return create_tensor_from_image<int64_t>(input_descr, batch_size, start_index);
     }
 
@@ -209,10 +202,10 @@ Ort::Value get_image_info_tensor(const inputs::InputDescr &input_descr, const cv
     if (precision == utils::DataPrecision::FP32) {
         return create_image_info_tensor<float>(input_descr, image_size, batch_size);
     }
-    else if (precision == utils::DataPrecision::S32) {
+    else if (precision == utils::DataPrecision::I32) {
         return create_image_info_tensor<int32_t>(input_descr, image_size, batch_size);
     }
-    else if (precision == utils::DataPrecision::S64) {
+    else if (precision == utils::DataPrecision::I64) {
         return create_image_info_tensor<int64_t>(input_descr, image_size, batch_size);
     }
 
@@ -227,15 +220,16 @@ Ort::Value get_tensor_from_binary(const inputs::InputDescr &input_descr, int bat
     if (precision == utils::DataPrecision::FP32) {
         return create_tensor_from_binary<float>(input_descr, batch_size, start_index);
     }
-    else if (precision == utils::DataPrecision::S32) {
+    else if (precision == utils::DataPrecision::I32) {
         return create_tensor_from_binary<int32_t>(input_descr, batch_size, start_index);
     }
-    else if (precision == utils::DataPrecision::S64) {
+    else if (precision == utils::DataPrecision::I64) {
         return create_tensor_from_binary<int64_t>(input_descr, batch_size, start_index);
     }
     else if (precision == utils::DataPrecision::U8 || precision == utils::DataPrecision::BOOL) {
         return create_tensor_from_binary<uint8_t>(input_descr, batch_size, start_index);
     }
+
     throw std::invalid_argument("Unsuported tensor precision: " + utils::get_precision_str(precision));
 }
 
@@ -247,16 +241,16 @@ Ort::Value get_random_tensor(const inputs::InputDescr &input_descr) {
     if (precision == utils::DataPrecision::FP32) {
         return create_random_tensor<float, float>(input_descr);
     }
-    else if (precision == utils::DataPrecision::S32) {
+    else if (precision == utils::DataPrecision::I32) {
         return create_random_tensor<int32_t, int32_t>(input_descr);
     }
-    else if (precision == utils::DataPrecision::S64) {
+    else if (precision == utils::DataPrecision::I64) {
         return create_random_tensor<int64_t, int64_t>(input_descr);
     }
-    else if (precision == utils::DataPrecision::U8) {
-        return create_random_tensor<uint8_t, uint32_t>(input_descr);
+    else if (precision == utils::DataPrecision::I8) {
+        return create_random_tensor<int8_t, int32_t>(input_descr);
     }
-    else if (precision == utils::DataPrecision::S8) {
+    else if (precision == utils::DataPrecision::U8) {
         return create_random_tensor<uint8_t, uint32_t>(input_descr);
     }
     else if (precision == utils::DataPrecision::BOOL) {
@@ -348,12 +342,8 @@ inputs::InputsInfo inputs::get_inputs_info(const std::map<std::string, std::vect
     bool is_dynamic_input = std::any_of(model_inputs.begin(), model_inputs.end(), [](const auto &tensor_descr) {
         return tensor_descr.is_dynamic();
     });
-    bool is_dynamic_batch = std::any_of(model_inputs.begin(), model_inputs.end(), [](const auto &tensor_descr) {
-        return tensor_descr.shape[0] == -1; // by this moment we don't have a layout for tensor, so we have to assume
-                                            // that batch value is shape[0]
-    });
 
-    if (is_dynamic_input && !is_dynamic_batch && input_shapes.empty()) {
+    if (is_dynamic_input && input_shapes.empty()) {
         throw std::logic_error("Shapes must be specified explicitly for models with dynamic input shapes.");
     }
 
@@ -367,7 +357,7 @@ inputs::InputsInfo inputs::get_inputs_info(const std::map<std::string, std::vect
         if (input_files.count(name) > 0) {
             input_descr.files = input_files.at(name);
         }
-        else if (input_files.count("") > 0 && input_files.size() == 1) { // case with 1 input wihtout specifying name
+        else if (input_files.count("") > 0 && input_files.size() == 1) { // case with 1 input without specifying name
             input_descr.files = input_files.at("");
         }
         else if (input_files.size() > 1) {
@@ -387,7 +377,7 @@ inputs::InputsInfo inputs::get_inputs_info(const std::map<std::string, std::vect
                                             " not found in the names provided with -shape argument.");
             }
         }
-        else if (!input_shapes.empty() && !is_dynamic_batch) {
+        else if (!input_shapes.empty()) {
             logger::warn << "Model inputs are static, -shape option will be ignored!" << logger::endl;
         }
 
@@ -409,7 +399,7 @@ inputs::InputsInfo inputs::get_inputs_info(const std::map<std::string, std::vect
             if (means.count(name) > 0) {
                 input_descr.mean = means.at(name);
             }
-            if (means.count("") > 0 && means.size() == 1) {
+            else if (means.count("") > 0 && means.size() == 1) {
                 input_descr.mean = means.at("");
             }
             else if (means.size() > 1) {
@@ -422,7 +412,7 @@ inputs::InputsInfo inputs::get_inputs_info(const std::map<std::string, std::vect
             if (scales.count(name) > 0) {
                 input_descr.scale = scales.at(name);
             }
-            if (scales.count("") > 0 && scales.size() == 1) {
+            else if (scales.count("") > 0 && scales.size() == 1) {
                 input_descr.scale = scales.at("");
             }
             else if (scales.size() > 1) {
