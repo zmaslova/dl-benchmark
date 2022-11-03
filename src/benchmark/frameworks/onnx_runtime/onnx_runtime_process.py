@@ -6,19 +6,24 @@ from ..processes import ProcessHandler
 
 
 class OnnxRuntimeProcess(ProcessHandler):
-    def __init__(self, test, executor, log, cpp_benchmark_path):
+    def __init__(self, test, executor, log, cpp_benchmarks_path):
         super().__init__(test, executor, log)
-        self._benchmark_path = cpp_benchmark_path
 
-        if not cpp_benchmark_path or not Path(cpp_benchmark_path).is_file():
-            raise ValueError('Must provide valid cpp_benchmark_path for ONNX Runtime benchmark')
+        invalid_path_exception = ValueError('Must provide valid path to the folder '
+                                            'with ONNX Runtime benchmark (--cpp_benchmarks_path)')
+        if not cpp_benchmarks_path:
+            raise invalid_path_exception
+
+        self._benchmark_path = Path(cpp_benchmarks_path).joinpath('onnxruntime_benchmark')
+        if not self._benchmark_path.is_file():
+            raise invalid_path_exception
 
         self._report_path = executor.get_path_to_logs_folder().joinpath(
             f'ort_benchmark_{test.model.name}_{datetime.now().strftime("%d.%m.%y_%H:%M:%S")}.json')
 
     @staticmethod
-    def create_process(test, executor, log, cpp_benchmark_path):
-        return OnnxRuntimeProcess(test, executor, log, cpp_benchmark_path)
+    def create_process(test, executor, log, cpp_benchmarks_path):
+        return OnnxRuntimeProcess(test, executor, log, cpp_benchmarks_path)
 
     def get_performance_metrics(self):
         if self._status != 0 or len(self._output) == 0:

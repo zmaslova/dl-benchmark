@@ -88,17 +88,22 @@ class OpenVINOBenchmarkPythonProcess(OpenVINOBenchmarkProcess):
 
 
 class OpenVINOBenchmarkCppProcess(OpenVINOBenchmarkProcess):
-    def __init__(self, test, executor, log, cpp_benchmark_path, perf_hint=''):
+    def __init__(self, test, executor, log, cpp_benchmarks_path, perf_hint=''):
         super().__init__(test, executor, log, perf_hint)
-        self._benchmark_path = cpp_benchmark_path
         self._perf_hint = perf_hint
 
-        if not cpp_benchmark_path or not Path(cpp_benchmark_path).is_file():
-            raise ValueError('Must provide valid cpp_benchmark_path for OpenVINO C++ benchmark')
+        invalid_path_exception = ValueError('Must provide valid path to the folder '
+                                            'with OpenVINO C++ benchmark_app (--cpp_benchmarks_path)')
+        if not cpp_benchmarks_path:
+            raise invalid_path_exception
+
+        self._benchmark_path = Path(cpp_benchmarks_path).joinpath('benchmark_app')
+        if not self._benchmark_path.is_file():
+            raise invalid_path_exception
 
     @staticmethod
-    def create_process(test, executor, log, cpp_benchmark_path=None):
-        return OpenVINOBenchmarkCppProcess(test, executor, log, cpp_benchmark_path)
+    def create_process(test, executor, log, cpp_benchmarks_path=None):
+        return OpenVINOBenchmarkCppProcess(test, executor, log, cpp_benchmarks_path)
 
     def _fill_command_line(self):
         model_xml = self._test.model.model
