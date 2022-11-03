@@ -59,11 +59,11 @@ Ort::Value create_random_tensor(const inputs::InputDescr &input_descr,
                                            tensor_descr.data_shape.size(),
                                            tensor_descr.type);
     auto* tensor_data = tensor.GetTensorMutableData<T>();
-    int64_t tensor_size = tensor.GetTensorTypeAndShapeInfo().GetElementCount();
+    size_t tensor_size = tensor.GetTensorTypeAndShapeInfo().GetElementCount();
 
     std::mt19937 gen(0);
     UniformDistribution<T2> distribution(rand_min, rand_max);
-    for (int64_t i = 0; i < tensor_size; ++i) {
+    for (size_t i = 0; i < tensor_size; ++i) {
         tensor_data[i] = static_cast<T>(distribution(gen));
     }
     return tensor;
@@ -115,7 +115,7 @@ Ort::Value create_image_info_tensor(const inputs::InputDescr &input_descr, const
     auto* tensor_data = tensor.GetTensorMutableData<T>();
     logger::info << "\t\t" << image_size.width << "x" << image_size.height << logger::endl;
     for (int b = 0; b < batch_size; ++b) {
-        int64_t image_info_size = tensor_size / batch_size;
+        int image_info_size = tensor_size / batch_size;
         for (int i = 0; i < image_info_size; ++i) {
             int id = b * image_info_size + i;
             if (0 == i) {
