@@ -158,7 +158,7 @@ Ort::Value create_tensor_from_binary(const inputs::InputDescr &input_descr, int 
         auto input_size = tensor_size * sizeof(T) / batch_size;
         if (file_size != input_size) {
             throw std::invalid_argument("File " + file_path + " contains " + std::to_string(file_size) +
-                                        " bytes but the mdoel expects " + std::to_string(input_size));
+                                        " bytes but the model expects " + std::to_string(input_size));
         }
 
         binary_file.seekg(0, std::ios_base::beg);
@@ -191,7 +191,7 @@ Ort::Value get_tensor_from_image(const inputs::InputDescr &input_descr, int batc
         return create_tensor_from_image<int64_t>(input_descr, batch_size, start_index);
     }
 
-    throw std::invalid_argument("Unsuported tensor precision: " + utils::get_precision_str(precision));
+    throw std::invalid_argument("Unsupported tensor precision: " + utils::get_precision_str(precision));
 }
 
 Ort::Value get_image_info_tensor(const inputs::InputDescr &input_descr, const cv::Size &image_size, int batch_size) {
@@ -209,7 +209,7 @@ Ort::Value get_image_info_tensor(const inputs::InputDescr &input_descr, const cv
         return create_image_info_tensor<int64_t>(input_descr, image_size, batch_size);
     }
 
-    throw std::invalid_argument("Unsuported tensor precision: " + utils::get_precision_str(precision));
+    throw std::invalid_argument("Unsupported tensor precision: " + utils::get_precision_str(precision));
 }
 
 Ort::Value get_tensor_from_binary(const inputs::InputDescr &input_descr, int batch_size, int start_index) {
@@ -230,7 +230,7 @@ Ort::Value get_tensor_from_binary(const inputs::InputDescr &input_descr, int bat
         return create_tensor_from_binary<uint8_t>(input_descr, batch_size, start_index);
     }
 
-    throw std::invalid_argument("Unsuported tensor precision: " + utils::get_precision_str(precision));
+    throw std::invalid_argument("Unsupported tensor precision: " + utils::get_precision_str(precision));
 }
 
 Ort::Value get_random_tensor(const inputs::InputDescr &input_descr) {
@@ -256,7 +256,7 @@ Ort::Value get_random_tensor(const inputs::InputDescr &input_descr) {
     else if (precision == utils::DataPrecision::BOOL) {
         return create_random_tensor<uint8_t, uint32_t>(input_descr, 0, 1);
     }
-    throw std::invalid_argument("Unsuported tensor precision: " + utils::get_precision_str(precision));
+    throw std::invalid_argument("Unsupported tensor precision: " + utils::get_precision_str(precision));
 }
 
 std::vector<std::vector<Ort::Value>> inputs::get_input_tensors(const inputs::InputsInfo &inputs_info,

@@ -39,7 +39,7 @@ void Report::save() {
 
 void Report::add_record(Category type, const std::vector<Record> &records) {
     if (record_categories_str.count(type) == 0) {
-        throw std::invalid_argument("Unsuported record type: " + std::to_string((uint)type));
+        throw std::invalid_argument("Unsupported record type: " + std::to_string((uint)type));
     }
     for (const auto &r : records) {
         records_per_category[type].push_back(r);
