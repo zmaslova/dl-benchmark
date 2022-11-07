@@ -110,4 +110,7 @@ test/smoke_test/cache_dir_smoke/
 test/smoke_test/working_dir_smoke/
 test/smoke_test/datasets_smoke/
 test/smoke_test/*.pickle
-test/smoke_test/*.csv
++test/smoke_test/*.csv
++
++# temporary stuff
++logs/
