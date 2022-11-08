@@ -44,6 +44,11 @@ def cli_argument_parser():
                         help='Path to the folder with pre-built C++ benchmark apps',
                         default=None,
                         required=False)
+    parser.add_argument('--openvino_cpp_benchmark_dir',
+                        type=str,
+                        help='Path to the folder with pre-built OpenVINO C++ Benchmark App',
+                        default=None,
+                        required=False)
 
     args = parser.parse_args()
 
@@ -53,7 +58,8 @@ def cli_argument_parser():
     return args
 
 
-def inference_benchmark(executor_type, test_list, output_handler, log, cpp_benchmarks_path=None):
+def inference_benchmark(executor_type, test_list, output_handler, log, cpp_benchmarks_path=None,
+                        openvino_cpp_benchmark_dir=None):
     status = EXIT_SUCCESS
 
     try:
@@ -64,8 +70,12 @@ def inference_benchmark(executor_type, test_list, output_handler, log, cpp_bench
 
     for test in test_list:
         framework_name = test.indep_parameters.inference_framework
+        benchmarks_path = cpp_benchmarks_path
+        if 'openvino' in framework_name.lower():
+            benchmarks_path = openvino_cpp_benchmark_dir
+
         test_process = FrameworkWrapperRegistry()[framework_name].create_process(test, process_executor,
-                                                                                 log, cpp_benchmarks_path)
+                                                                                 log, benchmarks_path)
         test_process.execute()
 
         log.info('Saving test result in file\n')
@@ -92,6 +102,7 @@ if __name__ == '__main__':
 
     log.info(f'Start {len(test_list)} inference tests\n')
 
-    return_code = inference_benchmark(args.executor_type, test_list, output_handler, log, args.cpp_benchmarks_path)
+    return_code = inference_benchmark(args.executor_type, test_list, output_handler, log,
+                                      args.cpp_benchmarks_path, args.openvino_cpp_benchmark_dir)
     log.info('Inference tests completed' if not return_code else 'Inference tests failed')
     sys.exit(return_code)

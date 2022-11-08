@@ -93,7 +93,7 @@ class OpenVINOBenchmarkCppProcess(OpenVINOBenchmarkProcess):
         self._perf_hint = perf_hint
 
         invalid_path_exception = ValueError('Must provide valid path to the folder '
-                                            'with OpenVINO C++ benchmark_app (--cpp_benchmarks_path)')
+                                            'with OpenVINO C++ benchmark_app (--openvino_cpp_benchmark_path)')
         if not cpp_benchmarks_path:
             raise invalid_path_exception
 
