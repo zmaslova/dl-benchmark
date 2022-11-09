@@ -79,12 +79,12 @@ def inference_benchmark(executor_type, test_list, output_handler, log, cpp_bench
                                                                                      log, benchmarks_path)
             test_process.execute()
 
-            current_status = test_process.get_status()
-            if current_status != EXIT_SUCCESS:
-                status = current_status
-                log.error(f'Test finished with non-zero code: {current_status}')
+            test_status = test_process.get_status()
+            if test_status != EXIT_SUCCESS:
+                status = test_status
+                log.error(f'Test finished with non-zero code: {test_status}')
         except Exception as ex:
-            log.error(f'Unhandled exception occured during test execution: {ex}', exc_info=True)
+            log.error(f'Inference failed with exception: {ex}', exc_info=True)
             status = EXIT_FAILURE
             test_process = None
 
