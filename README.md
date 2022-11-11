@@ -1,3 +1,5 @@
+DEMO
+
 # DLI: Deep Learning Inference Benchmark
 
 ## Introduction
