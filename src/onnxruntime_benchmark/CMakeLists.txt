@@ -20,7 +20,6 @@ find_path(ORT_INCLUDE onnxruntime_cxx_api.h
         ${ORT_INSTALL_DIR}/include/onnxruntime/core/session
         CMAKE_FIND_ROOT_PATH_BOTH)
 
-
 add_subdirectory(thirdparty/gflags)
 add_subdirectory(thirdparty/nlohmann_json)
 
