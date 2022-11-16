@@ -394,6 +394,11 @@ inputs::InputsInfo inputs::get_inputs_info(const std::map<std::string, std::vect
                                             " not found in the names provided with -layout argument.");
             }
         }
+        else {
+            logger::warn << "Layout for input \"" << name
+                         << "\" will be detected automatically, as it wasn't provided explicitly." << logger::endl;
+            input_descr.tensor_descr.layout = utils::guess_layout_from_shape(input_descr.tensor_descr.data_shape);
+        }
 
         if (!means.empty()) {
             std::vector<float> mean;
@@ -443,12 +448,6 @@ inputs::InputsInfo inputs::get_inputs_info(const std::map<std::string, std::vect
         inputs_info.emplace(name, input_descr);
     }
 
-    if (input_layouts.empty()) {
-        logger::warn << "Layout will be detected automatically, as it wasn't provided explicitly." << logger::endl;
-        for (auto &[name, input_descr] : inputs_info) {
-            input_descr.tensor_descr.layout = utils::guess_layout_from_shape(input_descr.tensor_descr.data_shape);
-        }
-    }
     return inputs_info;
 }
 
