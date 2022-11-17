@@ -9,6 +9,7 @@ class OpenVINOParametersParser(DependentParametersParser):
         CONFIG_FRAMEWORK_DEPENDENT_TAG = 'FrameworkDependent'
         CONFIG_FRAMEWORK_DEPENDENT_MODE_TAG = 'Mode'
         CONFIG_FRAMEWORK_DEPENDENT_EXTENSION_TAG = 'Extension'
+        CONFIG_FRAMEWORK_DEPENDENT_INFER_REQUEST_COUNT_TAG = 'InferenceRequestsCount'
         CONFIG_FRAMEWORK_DEPENDENT_ASYNC_REQUEST_COUNT_TAG = 'AsyncRequestCount'
         CONFIG_FRAMEWORK_DEPENDENT_THREAD_COUNT_TAG = 'ThreadCount'
         CONFIG_FRAMEWORK_DEPENDENT_STREAM_COUNT_TAG = 'StreamCount'
@@ -19,6 +20,8 @@ class OpenVINOParametersParser(DependentParametersParser):
             CONFIG_FRAMEWORK_DEPENDENT_MODE_TAG)[0].firstChild
         _extension = dep_parameters_tag.getElementsByTagName(
             CONFIG_FRAMEWORK_DEPENDENT_EXTENSION_TAG)[0].firstChild
+        _infer_request_count = dep_parameters_tag.getElementsByTagName(
+            CONFIG_FRAMEWORK_DEPENDENT_INFER_REQUEST_COUNT_TAG)[0].firstChild
         _async_request_count = dep_parameters_tag.getElementsByTagName(
             CONFIG_FRAMEWORK_DEPENDENT_ASYNC_REQUEST_COUNT_TAG)[0].firstChild
         _thread_count = dep_parameters_tag.getElementsByTagName(
@@ -29,6 +32,7 @@ class OpenVINOParametersParser(DependentParametersParser):
         return OpenVINOParameters(
             mode=_mode.data if _mode else None,
             extension=_extension.data if _extension else None,
+            infer_request_count=_infer_request_count.data if _infer_request_count else None,
             async_request_count=_async_request_count.data if _async_request_count else None,
             thread_count=_thread_count.data if _thread_count else None,
             stream_count=_stream_count.data if _stream_count else None,
@@ -36,9 +40,10 @@ class OpenVINOParametersParser(DependentParametersParser):
 
 
 class OpenVINOParameters(FrameworkParameters):
-    def __init__(self, mode, extension, async_request_count, thread_count, stream_count):
+    def __init__(self, mode, extension, infer_request_count, async_request_count, thread_count, stream_count):
         self.mode = None
         self.extension = None
+        self.infer_request = None
         self.async_request = None
         self.nthreads = None
         self.nstreams = None
@@ -49,6 +54,9 @@ class OpenVINOParameters(FrameworkParameters):
             self.extension = extension
         else:
             raise ValueError('Wrong extension path for device. File not found.')
+        if self._parameter_not_is_none(infer_request_count):
+            if self._int_value_is_correct(infer_request_count):
+                self.infer_request = infer_request_count
         if self.mode == 'Sync':
             if self._parameter_not_is_none(thread_count):
                 if self._int_value_is_correct(thread_count):
