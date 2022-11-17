@@ -52,6 +52,7 @@
         <FrameworkDependent>
             <Mode>sync</Mode>
             <Extension></Extension>
+            <InferenceRequestsCount>1</InferenceRequestsCount>
             <AsyncRequestCount></AsyncRequestCount>
             <ThreadCount></ThreadCount>
             <StreamCount></StreamCount>
