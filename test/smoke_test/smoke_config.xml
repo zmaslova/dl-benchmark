@@ -23,7 +23,6 @@
         <FrameworkDependent>
             <Mode>async</Mode>
             <Extension></Extension>
-            <InferenceRequestsCount>1</InferenceRequestsCount>
             <AsyncRequestCount>1</AsyncRequestCount>
             <ThreadCount></ThreadCount>
             <StreamCount></StreamCount>
@@ -52,7 +51,6 @@
         <FrameworkDependent>
             <Mode>sync</Mode>
             <Extension></Extension>
-            <InferenceRequestsCount>1</InferenceRequestsCount>
             <AsyncRequestCount></AsyncRequestCount>
             <ThreadCount></ThreadCount>
             <StreamCount></StreamCount>

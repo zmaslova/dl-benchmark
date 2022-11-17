@@ -24,8 +24,6 @@ class OpenVINOParametersParser(DependentParametersParser):
             CONFIG_FRAMEWORK_DEPENDENT_MODE_TAG)[0].firstChild
         _extension = dep_parameters_tag.getElementsByTagName(
             CONFIG_FRAMEWORK_DEPENDENT_EXTENSION_TAG)[0].firstChild
-        _infer_request_count = dep_parameters_tag.getElementsByTagName(
-            CONFIG_FRAMEWORK_DEPENDENT_INFER_REQUEST_COUNT_TAG)[0].firstChild
         _async_request_count = dep_parameters_tag.getElementsByTagName(
             CONFIG_FRAMEWORK_DEPENDENT_ASYNC_REQUEST_COUNT_TAG)[0].firstChild
         _thread_count = dep_parameters_tag.getElementsByTagName(
@@ -33,14 +31,19 @@ class OpenVINOParametersParser(DependentParametersParser):
         _stream_count = dep_parameters_tag.getElementsByTagName(
             CONFIG_FRAMEWORK_DEPENDENT_STREAM_COUNT_TAG)[0].firstChild
 
+        _infer_request_count = None
+        if dep_parameters_tag.getElementsByTagName(CONFIG_FRAMEWORK_DEPENDENT_INFER_REQUEST_COUNT_TAG):
+            _infer_request_count = dep_parameters_tag.getElementsByTagName(
+                CONFIG_FRAMEWORK_DEPENDENT_INFER_REQUEST_COUNT_TAG)[0].firstChild
+
         _shape, _layout, _mean, _input_scale = None, None, None, None
-        if (dep_parameters_tag.getElementsByTagName(CONFIG_FRAMEWORK_DEPENDENT_SHAPE_TAG)):
+        if dep_parameters_tag.getElementsByTagName(CONFIG_FRAMEWORK_DEPENDENT_SHAPE_TAG):
             _shape = dep_parameters_tag.getElementsByTagName(CONFIG_FRAMEWORK_DEPENDENT_SHAPE_TAG)[0].firstChild
-        if (dep_parameters_tag.getElementsByTagName(CONFIG_FRAMEWORK_DEPENDENT_LAYOUT_TAG)):
+        if dep_parameters_tag.getElementsByTagName(CONFIG_FRAMEWORK_DEPENDENT_LAYOUT_TAG):
             _layout = dep_parameters_tag.getElementsByTagName(CONFIG_FRAMEWORK_DEPENDENT_LAYOUT_TAG)[0].firstChild
-        if (dep_parameters_tag.getElementsByTagName(CONFIG_FRAMEWORK_DEPENDENT_MEAN_TAG)):
+        if dep_parameters_tag.getElementsByTagName(CONFIG_FRAMEWORK_DEPENDENT_MEAN_TAG):
             _mean = dep_parameters_tag.getElementsByTagName(CONFIG_FRAMEWORK_DEPENDENT_MEAN_TAG)[0].firstChild
-        if (dep_parameters_tag.getElementsByTagName(CONFIG_FRAMEWORK_DEPENDENT_SCALE_TAG)):
+        if dep_parameters_tag.getElementsByTagName(CONFIG_FRAMEWORK_DEPENDENT_SCALE_TAG):
             _input_scale = dep_parameters_tag.getElementsByTagName(CONFIG_FRAMEWORK_DEPENDENT_SCALE_TAG)[0].firstChild
 
         return OpenVINOParameters(

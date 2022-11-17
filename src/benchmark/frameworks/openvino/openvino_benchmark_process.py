@@ -78,14 +78,13 @@ class OpenVINOBenchmarkPythonProcess(OpenVINOBenchmarkProcess):
         if extension:
             arguments = self._add_extension_for_cmd_line(arguments, extension, device)
 
-        infer_request = self._test.dep_parameters.infer_request
-        if infer_request:
-            arguments = self._add_argument_to_cmd_line(arguments, '-nireq', infer_request)
-
         nthreads = self._test.dep_parameters.nthreads
         arguments = self._add_optional_argument_to_cmd_line(arguments, '-nthreads', nthreads)
 
         arguments = self._add_perf_hint_for_cmd_line(arguments, self._perf_hint)
+
+        arguments = self._add_optional_argument_to_cmd_line(arguments, '-nireq',
+                                                            self._test.dep_parameters.infer_request)
 
         arguments = self._add_optional_argument_to_cmd_line(arguments, '-shape', self._test.dep_parameters.shape)
         arguments = self._add_optional_argument_to_cmd_line(arguments, '-layout', self._test.dep_parameters.layout)
@@ -118,6 +117,8 @@ class OpenVINOBenchmarkPythonOnnxProcess(OpenVINOBenchmarkPythonProcess):
 
         nthreads = self._test.dep_parameters.nthreads
         arguments = self._add_optional_argument_to_cmd_line(arguments, '-nthreads', nthreads)
+        arguments = self._add_optional_argument_to_cmd_line(arguments, '-nireq',
+                                                            self._test.dep_parameters.infer_request)
 
         arguments = self._add_optional_argument_to_cmd_line(arguments, '-shape', self._test.dep_parameters.shape)
         arguments = self._add_optional_argument_to_cmd_line(arguments, '-layout', self._test.dep_parameters.layout)
@@ -163,15 +164,13 @@ class OpenVINOBenchmarkCppProcess(OpenVINOBenchmarkProcess):
         if extension:
             arguments = self._add_extension_for_cmd_line(arguments, extension, device)
 
-        infer_request = self._test.dep_parameters.infer_request
-        if infer_request:
-            arguments = self._add_argument_to_cmd_line(arguments, '-nireq', infer_request)
-
         nthreads = self._test.dep_parameters.nthreads
         arguments = self._add_optional_argument_to_cmd_line(arguments, '-nthreads', nthreads)
 
         arguments = self._add_perf_hint_for_cmd_line(arguments, self._perf_hint)
 
+        arguments = self._add_optional_argument_to_cmd_line(arguments, '-nireq',
+                                                            self._test.dep_parameters.infer_request)
         arguments = self._add_optional_argument_to_cmd_line(arguments, '-shape', self._test.dep_parameters.shape)
         arguments = self._add_optional_argument_to_cmd_line(arguments, '-layout', self._test.dep_parameters.layout)
 
@@ -222,6 +221,9 @@ class OpenVINOBenchmarkCppOnnxProcess(OpenVINOBenchmarkCppProcess):
 
         nthreads = self._test.dep_parameters.nthreads
         arguments = self._add_optional_argument_to_cmd_line(arguments, '-nthreads', nthreads)
+
+        arguments = self._add_optional_argument_to_cmd_line(arguments, '-nireq',
+                                                            self._test.dep_parameters.infer_request)
 
         arguments = self._add_optional_argument_to_cmd_line(arguments, '-shape', self._test.dep_parameters.shape)
         arguments = self._add_optional_argument_to_cmd_line(arguments, '-layout', self._test.dep_parameters.layout)
