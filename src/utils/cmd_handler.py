@@ -1,6 +1,5 @@
 import abc
 import os
-import signal
 import subprocess
 import threading
 import sys
@@ -59,6 +58,6 @@ class CMDHandler(metaclass=abc.ABCMeta):
             if sys.platform == 'win32':
                 subprocess.call(['taskkill', '/F', '/T', '/PID', str(pid)])
             else:
-                os.killpg(pid, signal.SIGKILL)
+                os.system(f'pkill -TERM -P {pid}')
         except OSError as err:
             print(err)
