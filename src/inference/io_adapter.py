@@ -11,10 +11,10 @@ class IOAdapter(metaclass=abc.ABCMeta):
         self._transformed_input = None
         self._original_shapes = None
         self._batch_size = args.batch_size
-        self._labels = args.labels if hasattr(args, 'labels') else None
-        self._number_top = args.number_top if hasattr(args, 'number_top') else None
-        self._threshold = args.threshold if hasattr(args, 'threshold') else None
-        self._color_map = args.color_map if hasattr(args, 'color_map') else None
+        self._labels = getattr(args, 'labels', None)
+        self._number_top = getattr(args, 'number_top', None)
+        self._threshold = getattr(args, 'threshold', None)
+        self._color_map = getattr(args, 'color_map', None)
         self._io_model_wrapper = io_model_wrapper
         self._transformer = transformer
 
