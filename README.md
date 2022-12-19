@@ -13,6 +13,8 @@ DLI supports:
 - [Intel® Distribution of OpenVINO™ Toolkit][openvino-toolkit].
 - [Intel® Optimization for Caffe][intel-caffe].
 - [Intel® Optimization for TensorFlow][intel-tensorflow].
+- [TensorFlow Lite][tensorflow-lite].
+- [ONNX Runtime][onnx-runtime].
 
 More information about DLI is available
 [here][dli-ru-web-page] (in Russian)
@@ -435,6 +437,8 @@ follow instructions.
 [openvino-toolkit]: https://software.intel.com/en-us/openvino-toolkit
 [intel-caffe]: https://github.com/intel/caffe
 [intel-tensorflow]: https://www.intel.com/content/www/us/en/developer/articles/guide/optimization-for-tensorflow-installation-guide.html
+[tensorflow-lite]: https://www.tensorflow.org/lite/
+[onnx-runtime]: https://onnxruntime.ai/
 [dli-ru-web-page]: http://hpc-education.unn.ru/dli-ru
 [dli-web-page]: http://hpc-education.unn.ru/dli
 [open-model-zoo]: https://github.com/opencv/open_model_zoo
