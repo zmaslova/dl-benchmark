@@ -102,11 +102,14 @@ Novgorod State University Publishing House, 2021. – 423 p.
   - `csv2xlsx` is a set of scripts to convert result table
     from csv to xlsx.
   - `deployment` is a set of deployment tools.
-  - `inference` contains inference implementation.
+  - `inference` contains python inference implementation.
+  - `node_info` contains script to get hardware information.
+  - `onnxruntime_benchmark` contains c++ ONNXRuntime inference tool.
   - `quantization` contains scripts to quantize model to INT8-precision
     using Post-Training Optimization Tool (POT) of Intel® Distribution of OpenVINO™ toolkit.
   - `remote_control` contains scripts to execute benchmark
     remotely.
+  - `utils` contains common python scripts utilities.
 
 
 ## Software installation
