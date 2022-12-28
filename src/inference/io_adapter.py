@@ -18,14 +18,15 @@ class IOAdapter(metaclass=abc.ABCMeta):
         self._io_model_wrapper = io_model_wrapper
         self._transformer = transformer
 
-    def __convert_images(self, shape, data, dtype):
+    def __convert_images(self, shape, data, dtype, input_name):
+        chw = self._transformer.get_shape_in_chw_order(shape, input_name)
         images = []
         image_shapes = []
         niter = np.ceil(max(self._batch_size, len(data)) / len(data)).astype(int)
         for _ in range(niter):
             for i in range(len(data)):
-                image, im_shape = self.__read_data(data[i], shape, dtype)
-                image_shapes.append(im_shape)
+                image = self.__read_data(data[i], shape, dtype, chw)
+                image_shapes.append(chw[1:])
                 images.append(image)
         return np.array(images), image_shapes
 
@@ -63,8 +64,7 @@ class IOAdapter(metaclass=abc.ABCMeta):
         result = result.reshape(shape)
         return result
 
-    def __read_data(self, filename, shape, dtype):
-        _, h, w = self._transformer.get_shape_in_chw_order(shape)
+    def __read_data(self, filename, shape, dtype, input_shape):
         data = []
         file_type = filename.split('.')[-1]
         if file_type == 'bin':
@@ -79,12 +79,13 @@ class IOAdapter(metaclass=abc.ABCMeta):
         else:
             try:
                 data = cv2.imread(filename)
-                if data.shape[:-1] != (h, w):
-                    data = cv2.resize(data, (h, w))
+                if data.shape[:-1] != input_shape[1:]:
+                    h, w = input_shape[1:]
+                    data = cv2.resize(data, (w, h))
             except Exception as ex:
                 raise ValueError(f'Unable to read input file {filename}. Exception occured: {str(ex)}')
 
-        return data, (h, w)
+        return data
 
     def prepare_input(self, model, input_):
         self._input = {}
@@ -104,7 +105,7 @@ class IOAdapter(metaclass=abc.ABCMeta):
                     value = self.__create_list_images(value)
                     shape = self._io_model_wrapper.get_input_layer_shape(model, key)
                     element_type = self._io_model_wrapper.get_input_layer_dtype(model, key)
-                    value, shapes = self.__convert_images(shape, value, element_type)
+                    value, shapes = self.__convert_images(shape, value, element_type, key)
                     transformed_value = self._transformer.transform_images(value, shape, element_type, key)
                 self._input.update({key: value})
                 self._original_shapes.update({key: shapes})
@@ -120,7 +121,7 @@ class IOAdapter(metaclass=abc.ABCMeta):
                 value = self.__create_list_images(input_)
                 shape = self._io_model_wrapper.get_input_layer_shape(model, input_blob)
                 element_type = self._io_model_wrapper.get_input_layer_dtype(model, input_blob)
-                value, shapes = self.__convert_images(shape, value, element_type)
+                value, shapes = self.__convert_images(shape, value, element_type, input_blob)
                 transformed_value = self._transformer.transform_images(value, shape, element_type, input_blob)
             self._input.update({input_blob: value})
             self._original_shapes.update({input_blob: shapes})
